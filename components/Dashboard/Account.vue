@@ -1,12 +1,11 @@
 <template>
-
   <Card v-if="account">
     <CardHeader>
       <CardTitle class="text-2xl font-bold text-primary">Account Summary</CardTitle>
       <CardDescription>Live OANDA stats for your trading account</CardDescription>
     </CardHeader>
 
-    <CardContent>
+    <CardContent class="font-mono">
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
         <div>
           <p class="text-sm text-muted-foreground">Balance</p>
@@ -15,10 +14,7 @@
 
         <div>
           <p class="text-sm text-muted-foreground">PnL (Unrealized)</p>
-          <p :class="[
-            'text-lg font-semibold',
-            Number(account.pl) >= 0 ? 'text-green-600' : 'text-red-600'
-          ]">
+          <p :class="['text-lg font-semibold', Number(account.pl) >= 0 ? 'text-green-600' : 'text-red-600']">
             ${{ Number(account.pl).toFixed(2) }}
           </p>
         </div>
@@ -29,6 +25,21 @@
         </div>
 
         <div>
+          <p class="text-sm text-muted-foreground">Realized PnL</p>
+          <p class="text-lg font-semibold text-yellow-600">${{ Number(account.resettablePL).toFixed(2) }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-muted-foreground">Position Value</p>
+          <p class="text-lg font-semibold">${{ Number(account.positionValue).toFixed(2) }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-muted-foreground">Margin Used</p>
+          <p class="text-lg font-semibold">${{ Number(account.marginUsed).toFixed(2) }}</p>
+        </div>
+
+        <div>
           <p class="text-sm text-muted-foreground">Margin Available</p>
           <p class="text-lg font-semibold">${{ Number(account.marginAvailable).toFixed(2) }}</p>
         </div>
@@ -36,6 +47,15 @@
         <div>
           <p class="text-sm text-muted-foreground">Open Trades</p>
           <p class="text-lg font-semibold">{{ account.openTradeCount }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-muted-foreground">Leverage</p>
+          <p class="text-lg font-semibold">
+            {{
+              calculateLeverage(account.marginUsed, account.positionValue)
+            }}
+          </p>
         </div>
       </div>
     </CardContent>
@@ -50,4 +70,13 @@
 <script setup lang="ts">
 const { data, pending, error } = useOandaAccount();
 const account = computed(() => data.value);
+
+const calculateLeverage = (used: string, value: string) => {
+  const marginUsed = parseFloat(used);
+  const positionValue = parseFloat(value);
+
+  if (marginUsed === 0 || isNaN(marginUsed) || isNaN(positionValue)) return '—';
+  const leverage = positionValue / marginUsed;
+  return `${Math.round(leverage)}:1`;
+};
 </script>

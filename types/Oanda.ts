@@ -15,6 +15,9 @@ export interface OandaAccount {
   NAV: string;
   marginAvailable: string;
   openTradeCount: number;
+  resettablePL: string;
+  positionValue: string;
+  marginUsed: string;
   positions: OandaPosition[];
 }
 
