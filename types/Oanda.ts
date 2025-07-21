@@ -20,16 +20,3 @@ export interface OandaAccount {
   marginUsed: string;
   positions: OandaPosition[];
 }
-
-export interface OandaPricing {
-  prices: Array<{
-    instrument: string;
-    bids: Array<{
-      price: string;
-    }>;
-    asks: Array<{
-      price: string;
-    }>;
-    time: string;
-  }>;
-}

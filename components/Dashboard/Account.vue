@@ -9,49 +9,49 @@
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
         <div>
           <p class="text-sm text-muted-foreground">Balance</p>
-          <p class="text-lg font-semibold">${{ Number(account.balance).toFixed(2) }}</p>
+          <p class="text-lg">${{ Number(account.balance).toFixed(2) }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">PnL (Unrealized)</p>
-          <p :class="['text-lg font-semibold', Number(account.pl) >= 0 ? 'text-green-600' : 'text-red-600']">
+          <p :class="['text-lg', Number(account.pl) >= 0 ? 'text-green-600' : 'text-destructive']">
             ${{ Number(account.pl).toFixed(2) }}
           </p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">NAV</p>
-          <p class="text-lg font-semibold">${{ Number(account.NAV).toFixed(2) }}</p>
+          <p class="text-lg">${{ Number(account.NAV).toFixed(2) }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">Realized PnL</p>
-          <p class="text-lg font-semibold text-yellow-600">${{ Number(account.resettablePL).toFixed(2) }}</p>
+          <p class="text-lg text-primary">${{ Number(account.resettablePL).toFixed(2) }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">Position Value</p>
-          <p class="text-lg font-semibold">${{ Number(account.positionValue).toFixed(2) }}</p>
+          <p class="text-lg">${{ Number(account.positionValue).toFixed(2) }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">Margin Used</p>
-          <p class="text-lg font-semibold">${{ Number(account.marginUsed).toFixed(2) }}</p>
+          <p class="text-lg">${{ Number(account.marginUsed).toFixed(2) }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">Margin Available</p>
-          <p class="text-lg font-semibold">${{ Number(account.marginAvailable).toFixed(2) }}</p>
+          <p class="text-lg">${{ Number(account.marginAvailable).toFixed(2) }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">Open Trades</p>
-          <p class="text-lg font-semibold">{{ account.openTradeCount }}</p>
+          <p class="text-lg">{{ account.openTradeCount }}</p>
         </div>
 
         <div>
           <p class="text-sm text-muted-foreground">Leverage</p>
-          <p class="text-lg font-semibold">
+          <p class="text-lg">
             {{
               calculateLeverage(account.marginUsed, account.positionValue)
             }}
