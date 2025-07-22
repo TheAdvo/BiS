@@ -1,3 +1,14 @@
+export interface OandaPositionSide {
+  units: string;
+  pl: string;
+}
+
+export interface OandaPosition {
+  instrument: string;
+  long: OandaPositionSide;
+  short: OandaPositionSide;
+}
+
 export interface OandaAccount {
   balance: string;
   pl: string;
@@ -7,4 +18,5 @@ export interface OandaAccount {
   resettablePL: string;
   positionValue: string;
   marginUsed: string;
+  positions: OandaPosition[];
 }
