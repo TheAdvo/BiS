@@ -35,5 +35,10 @@ export default defineEventHandler((event) => {
     event.node.res.end()
   })
 
+  event.node.req.on('close', () => {
+    console.log('Client closed connection, aborting OANDA stream.')
+    req.destroy()
+  })
+
   req.end()
 })
