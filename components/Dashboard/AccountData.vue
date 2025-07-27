@@ -15,20 +15,20 @@
         <div class="space-y-3">
           <!-- Key Metrics -->
           <div class="grid grid-cols-2 gap-3">
-            <div class="p-3 rounded-lg bg-muted/30">
+            <div class="p-3 rounded-lg bg-accent/30">
               <div class="text-xs text-muted-foreground uppercase tracking-wide">Balance</div>
               <div class="text-lg font-bold flex items-center gap-1">
                 <span>{{ getFlag(account.currency) }}</span>
                 {{ formattedAccount?.balance }}
               </div>
             </div>
-            <div class="p-3 rounded-lg bg-muted/30">
+            <div class="p-3 rounded-lg bg-accent/30">
               <div class="text-xs text-muted-foreground uppercase tracking-wide">PnL</div>
-              <div class="text-lg font-bold" :class="Number(account.pl) >= 0 ? 'text-green-500' : 'text-red-500'">
+              <div class="text-lg font-bold" :class="Number(account.pl) >= 0 ? 'text-green-500' : 'text-destructive'">
                 {{ formattedAccount?.pl }}
                 <span v-if="previousPL !== null" class="text-xs ml-1">
                   <span v-if="Number(account.pl) > previousPL" class="text-green-500">▲</span>
-                  <span v-else-if="Number(account.pl) < previousPL" class="text-red-500">▼</span>
+                  <span v-else-if="Number(account.pl) < previousPL" class="text-destructive">▼</span>
                 </span>
               </div>
             </div>

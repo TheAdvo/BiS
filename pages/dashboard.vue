@@ -70,15 +70,15 @@ definePageMeta({
         <div class="flex-1 flex flex-col">
           <!-- Header -->
           <DashboardHeader />
-          
+
           <!-- Dashboard Content -->
-          <main class="flex-1 p-6 bg-muted/20">
+          <main class="flex-1 p-6 bg-background">
             <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 h-full">
               <!-- Left side - Chart (3 columns) -->
               <div class="xl:col-span-3">
                 <DashboardTradingView />
               </div>
-              
+
               <!-- Right side - Data panels (1 column) -->
               <div class="space-y-6">
                 <DashboardMarketStatus />

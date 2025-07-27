@@ -19,10 +19,10 @@
           <div 
             v-for="pair in mockPairs" 
             :key="pair.name" 
-            class="flex items-center justify-between px-3 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
+            class="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors cursor-pointer"
           >
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+              <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-medium">
                 {{ pair.flag }}
               </div>
               <div>
@@ -30,10 +30,10 @@
                 <div class="text-xs text-muted-foreground">{{ pair.description }}</div>
               </div>
             </div>
-            
+
             <div class="text-right">
               <div class="text-sm font-medium">{{ pair.price }}</div>
-              <div class="text-xs" :class="pair.change > 0 ? 'text-green-500' : 'text-red-500'">
+              <div class="text-xs" :class="pair.change > 0 ? 'text-green-500' : 'text-destructive'">
                 {{ pair.change > 0 ? '+' : '' }}{{ pair.change }}%
               </div>
             </div>

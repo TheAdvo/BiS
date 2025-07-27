@@ -7,27 +7,26 @@
             <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
             <span class="text-xl font-bold">{{ selectedSymbol || 'EUR/USD' }}</span>
           </CardTitle>
-          
+
           <!-- Price display -->
           <div class="flex items-center gap-3 text-sm">
             <div class="flex flex-col">
-              <span class="text-2xl font-bold text-green-500">1.0845</span>
+              <span class="text-2xl font-bold text-green-600">1.0845</span>
               <span class="text-xs text-muted-foreground">+0.0012 (+0.11%)</span>
             </div>
           </div>
         </div>
-        
+
         <div class="flex items-center gap-2">
           <!-- Quick timeframe buttons -->
           <div class="flex items-center bg-muted rounded-lg p-1">
             <Button 
               v-for="tf in quickTimeframes" 
               :key="tf.value"
-              variant="ghost" 
+              :variant="selectedTimeframe === tf.value ? 'default' : 'ghost'" 
               size="sm" 
               class="h-7 px-3 text-xs"
-              :class="selectedTimeframe === tf.value ? 'bg-primary text-primary-foreground' : ''"
-              @click="selectedTimeframe = tf.value; updateTimeframe(tf.value)"
+              @click="updateTimeframe(tf.value)"
             >
               {{ tf.label }}
             </Button>
@@ -63,9 +62,9 @@
         </div>
 
         <!-- Error State -->
-        <div v-if="hasError" class="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-lg z-10">
+        <div v-if="hasError" class="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg z-10">
           <div class="flex flex-col items-center gap-2 text-center">
-            <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-12 h-12 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <span class="text-sm text-muted-foreground">Failed to load chart</span>

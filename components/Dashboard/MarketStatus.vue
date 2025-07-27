@@ -11,7 +11,7 @@
         <div class="space-y-3">
           <!-- Major Markets Status -->
           <div class="space-y-2">
-            <div v-for="market in marketStatuses" :key="market.name" class="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+            <div v-for="market in marketStatuses" :key="market.name" class="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 transition-colors">
               <div class="flex items-center gap-2">
                 <div class="w-1.5 h-1.5 rounded-full" :class="market.isOpen ? 'bg-green-500' : 'bg-red-500'"></div>
                 <div>

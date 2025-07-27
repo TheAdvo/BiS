@@ -5,7 +5,7 @@
       <div class="flex items-center gap-4">
         <h1 class="text-xl font-semibold">Trading Dashboard</h1>
         <div class="flex items-center gap-2">
-          <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
           <span class="text-sm text-muted-foreground">Live</span>
         </div>
       </div>
@@ -16,7 +16,7 @@
         <div class="flex items-center gap-2 text-sm">
           <span class="text-muted-foreground">Markets:</span>
           <Badge variant="outline" class="text-xs">
-            <div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></div>
+            <div class="w-1.5 h-1.5 bg-green-600 rounded-full mr-1"></div>
             Open
           </Badge>
         </div>
