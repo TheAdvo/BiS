@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-[400px]">
-    <Card class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
+    <Card class="h-full">
       <CardHeader class="pb-3 border-b">
         <CardTitle class="text-sm font-semibold flex items-center gap-2">
           <div class="w-2 h-2 rounded-full animate-pulse" :class="statusIndicator.color"></div>

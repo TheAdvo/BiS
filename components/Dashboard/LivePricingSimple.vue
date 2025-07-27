@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-[400px]">
-    <Card class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
+    <Card class="h-full">
       <CardHeader class="pb-3 border-b">
         <div class="flex items-center justify-between">
           <CardTitle class="text-base font-bold flex items-center gap-2">
@@ -16,11 +16,7 @@
       <CardContent class="overflow-y-auto h-[320px] p-0">
         <!-- Pricing List -->
         <div class="divide-y divide-border">
-          <div 
-            v-for="pair in mockPairs" 
-            :key="pair.name" 
-            class="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors cursor-pointer"
-          >
+          <div v-for="pair in mockPairs" :key="pair.name" class="flex items-center justify-between px-3 py-3 hover:bg-accent/50 transition-colors cursor-pointer">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-medium">
                 {{ pair.flag }}

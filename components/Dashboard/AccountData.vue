@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-[400px]">
-    <Card v-if="account" class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
+    <Card v-if="account" class="h-full">
       <CardHeader class="pb-3 border-b">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">

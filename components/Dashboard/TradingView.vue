@@ -1,6 +1,6 @@
 <template>
-  <Card class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
-    <CardHeader class="border-b bg-card/80 backdrop-blur">
+  <Card class="h-full">
+    <CardHeader class="border-b">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
@@ -20,14 +20,7 @@
         <div class="flex items-center gap-2">
           <!-- Quick timeframe buttons -->
           <div class="flex items-center bg-muted rounded-lg p-1">
-            <Button 
-              v-for="tf in quickTimeframes" 
-              :key="tf.value"
-              :variant="selectedTimeframe === tf.value ? 'default' : 'ghost'" 
-              size="sm" 
-              class="h-7 px-3 text-xs"
-              @click="updateTimeframe(tf.value)"
-            >
+            <Button v-for="tf in quickTimeframes" :key="tf.value" :variant="selectedTimeframe === tf.value ? 'default' : 'ghost'" size="sm" class="h-7 px-3 text-xs" @click="updateTimeframe(tf.value)">
               {{ tf.label }}
             </Button>
           </div>
