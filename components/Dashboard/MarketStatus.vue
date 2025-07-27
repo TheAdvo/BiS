@@ -1,27 +1,27 @@
 <template>
-  <div class="w-full h-[500px]">
-    <Card class="h-full">
-      <CardHeader>
-        <CardTitle class="text-lg font-semibold flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full animate-pulse" :class="statusIndicator.color"></div>
-          <div class="text-2xl font-bold text-primary">Market Status</div>
+  <div class="w-full h-[400px]">
+    <Card class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
+      <CardHeader class="pb-3 border-b">
+        <CardTitle class="text-sm font-semibold flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full animate-pulse" :class="statusIndicator.color"></div>
+          <span class="text-base font-bold">Markets</span>
         </CardTitle>
       </CardHeader>
-      <CardContent class="overflow-y-auto h-[400px]">
-        <div class="space-y-4">
-          <!-- Multiple Market Status -->
-          <div class="grid grid-cols-2 gap-4">
-            <div v-for="market in marketStatuses" :key="market.name" class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium">{{ market.name }}:</span>
-                <Badge :variant="market.isOpen ? 'default' : 'secondary'" class="flex items-center gap-1">
-                  <div class="w-2 h-2 rounded-full" :class="market.isOpen ? 'bg-green-500' : 'bg-red-500'"></div>
-                  {{ market.isOpen ? 'Open' : 'Closed' }}
-                </Badge>
+      <CardContent class="overflow-y-auto h-[320px] p-3">
+        <div class="space-y-3">
+          <!-- Major Markets Status -->
+          <div class="space-y-2">
+            <div v-for="market in marketStatuses" :key="market.name" class="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <div class="flex items-center gap-2">
+                <div class="w-1.5 h-1.5 rounded-full" :class="market.isOpen ? 'bg-green-500' : 'bg-red-500'"></div>
+                <div>
+                  <div class="text-sm font-medium">{{ market.name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ market.hours }}</div>
+                </div>
               </div>
-              <div class="text-xs text-muted-foreground">
-                {{ market.hours }}
-              </div>
+              <Badge :variant="market.isOpen ? 'default' : 'secondary'" class="text-xs px-2 py-0.5">
+                {{ market.isOpen ? 'Open' : 'Closed' }}
+              </Badge>
             </div>
           </div>
 

@@ -1,15 +1,41 @@
 <template>
-  <Card class="h-full">
-    <CardHeader>
+  <Card class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
+    <CardHeader class="border-b bg-card/80 backdrop-blur">
       <div class="flex items-center justify-between">
-        <CardTitle class="text-lg font-semibold flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
-          <div class="text-2xl font-bold text-primary">Trading View</div>
-        </CardTitle>
+        <div class="flex items-center gap-4">
+          <CardTitle class="text-lg font-semibold flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="text-xl font-bold">{{ selectedSymbol || 'EUR/USD' }}</span>
+          </CardTitle>
+          
+          <!-- Price display -->
+          <div class="flex items-center gap-3 text-sm">
+            <div class="flex flex-col">
+              <span class="text-2xl font-bold text-green-500">1.0845</span>
+              <span class="text-xs text-muted-foreground">+0.0012 (+0.11%)</span>
+            </div>
+          </div>
+        </div>
+        
         <div class="flex items-center gap-2">
+          <!-- Quick timeframe buttons -->
+          <div class="flex items-center bg-muted rounded-lg p-1">
+            <Button 
+              v-for="tf in quickTimeframes" 
+              :key="tf.value"
+              variant="ghost" 
+              size="sm" 
+              class="h-7 px-3 text-xs"
+              :class="selectedTimeframe === tf.value ? 'bg-primary text-primary-foreground' : ''"
+              @click="selectedTimeframe = tf.value; updateTimeframe(tf.value)"
+            >
+              {{ tf.label }}
+            </Button>
+          </div>
+
           <!-- Symbol Selector -->
           <Select v-model="selectedSymbol" @update:modelValue="updateSymbol">
-            <SelectTrigger class="w-32">
+            <SelectTrigger class="w-32 h-8">
               <SelectValue placeholder="Symbol" />
             </SelectTrigger>
             <SelectContent>
@@ -19,33 +45,18 @@
             </SelectContent>
           </Select>
 
-          <!-- Timeframe Selector -->
-          <Select v-model="selectedTimeframe" @update:modelValue="updateTimeframe">
-            <SelectTrigger class="w-24">
-              <SelectValue placeholder="Time" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="timeframe in timeframes" :key="timeframe.value" :value="timeframe.value">
-                {{ timeframe.label }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <!-- Refresh Button -->
-          <Button variant="outline" size="sm" @click="refreshChart" :disabled="isLoading" class="flex items-center gap-1">
-            <svg class="w-4 h-4" :class="{ 'animate-spin': isLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-            Refresh
+          <!-- More options -->
+          <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
+            <Icon name="lucide:more-horizontal" class="h-4 w-4" />
           </Button>
         </div>
       </div>
     </CardHeader>
-    <CardContent>
-      <div class="relative w-full h-96 lg:h-[500px]">
+    <CardContent class="p-0">
+      <div class="relative w-full h-96 lg:h-[600px]">
         <!-- Loading State -->
-        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-lg z-10">
-          <div class="flex flex-col items-center gap-2">
+        <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+          <div class="flex flex-col items-center gap-3">
             <div class="w-8 h-8 border-4 border-primary/20 border-l-primary rounded-full animate-spin"></div>
             <span class="text-sm text-muted-foreground">Loading chart...</span>
           </div>
@@ -113,6 +124,15 @@ const timeframes = ref([
   { label: '4h', value: '240' },
   { label: '1D', value: '1D' },
   { label: '1W', value: '1W' }
+])
+
+// Quick access timeframes for the header
+const quickTimeframes = ref([
+  { label: '1m', value: '1' },
+  { label: '5m', value: '5' },
+  { label: '15m', value: '15' },
+  { label: '1h', value: '60' },
+  { label: '1D', value: '1D' }
 ])
 
 // Helper function to get timeframe label
@@ -208,7 +228,10 @@ function updateSymbol() {
 }
 
 // Update timeframe
-function updateTimeframe() {
+function updateTimeframe(timeframe?: string) {
+  if (timeframe) {
+    selectedTimeframe.value = timeframe
+  }
   initializeChart()
 }
 
