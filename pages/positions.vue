@@ -15,13 +15,9 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 import DashboardHeader from '@/components/Dashboard/Header.vue'
-import DashboardAccountData from '@/components/Dashboard/AccountData.vue'
-import DashboardLivePricing from '@/components/Dashboard/LivePricingSimple.vue'
-import DashboardMarketStatus from '@/components/Dashboard/MarketStatus.vue'
-import DashboardTradingView from '@/components/Dashboard/TradingView.vue'
-import DashboardQuickStats from '@/components/Dashboard/QuickStats.vue'
+import DashboardPositionsTable from '@/components/Dashboard/PositionsTable.vue'
 
-// Menu items.
+// Menu items
 const items = [
   {
     title: "Overview",
@@ -61,7 +57,7 @@ definePageMeta({
 })
 
 onMounted(() => {
-  console.log('Dashboard loaded', 'Welcome to ADVOAI Trading Engine')
+  console.log('Positions loaded', 'Monitoring your open positions')
 })
 </script>
 
@@ -98,23 +94,24 @@ onMounted(() => {
       <!-- Header -->
       <DashboardHeader />
 
-      <!-- Dashboard Content -->
+      <!-- Positions Content -->
       <div class="flex-1 p-6 bg-background">
-        <!-- Quick Stats -->
-        <DashboardQuickStats />
-
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 h-full">
-          <!-- Left side - Chart (3 columns) -->
-          <div class="xl:col-span-3">
-            <DashboardTradingView />
+        <div class="space-y-6">
+          <!-- Page Title -->
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-3xl font-bold tracking-tight">Open Positions</h1>
+              <p class="text-muted-foreground">Monitor and manage your active trading positions</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-3 py-1 text-sm bg-green-500/10 text-green-500 rounded-full border border-green-500/20">
+                Live Trading
+              </span>
+            </div>
           </div>
 
-          <!-- Right side - Data panels (1 column) -->
-          <div class="space-y-6">
-            <DashboardMarketStatus />
-            <DashboardAccountData />
-            <DashboardLivePricing />
-          </div>
+          <!-- Positions Table -->
+          <DashboardPositionsTable />
         </div>
       </div>
     </main>

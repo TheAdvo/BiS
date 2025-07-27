@@ -17,18 +17,21 @@
         <div class="flex items-center gap-2 text-sm">
           <span class="text-muted-foreground">Markets:</span>
           <Badge variant="outline" class="text-xs">
-            <div class="w-1.5 h-1.5 bg-green-600 rounded-full mr-1"></div>
-            Open
+            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="marketBadgeColor"></div>
+            {{ marketBadgeText }}
           </Badge>
         </div>
 
         <!-- Notifications -->
-        <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" class="h-8 w-8 p-0 relative" @click="toggleNotifications">
           <Icon name="lucide:bell" class="h-4 w-4" />
+          <span v-if="unreadNotifications > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            {{ unreadNotifications }}
+          </span>
         </Button>
 
         <!-- Settings -->
-        <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="$router.push('/settings')">
           <Icon name="lucide:settings" class="h-4 w-4" />
         </Button>
 
@@ -36,7 +39,9 @@
         <div class="flex items-center gap-2 pl-2 border-l">
           <div class="text-right text-sm">
             <div class="font-medium">Live Account</div>
-            <div class="text-xs text-muted-foreground">Connected</div>
+            <div class="text-xs" :class="accountStatus === 'connected' ? 'text-green-600' : 'text-red-600'">
+              {{ accountStatus === 'connected' ? 'Connected' : 'Disconnected' }}
+            </div>
           </div>
           <Button variant="ghost" size="sm" class="h-8 w-8 p-0 rounded-full">
             <Icon name="lucide:user" class="h-4 w-4" />
@@ -48,7 +53,50 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+
+// Reactive state
+const unreadNotifications = ref(3)
+const marketStatus = ref('open')
+const accountStatus = ref('connected')
+
+// Update market status based on time
+const updateMarketStatus = () => {
+  const now = new Date()
+  const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+  const day = nyTime.getDay()
+  const hour = nyTime.getHours()
+
+  // Simple market hours check (9:30 AM - 4:00 PM ET, Monday-Friday)
+  if (day >= 1 && day <= 5 && hour >= 9.5 && hour < 16) {
+    marketStatus.value = 'open'
+  } else {
+    marketStatus.value = 'closed'
+  }
+}
+
+// Computed properties
+const marketBadgeText = computed(() => {
+  return marketStatus.value === 'open' ? 'Open' : 'Closed'
+})
+
+const marketBadgeColor = computed(() => {
+  return marketStatus.value === 'open' ? 'bg-green-600' : 'bg-red-600'
+})
+
+// Actions
+const toggleNotifications = () => {
+  console.log('Notifications', 'You have 3 unread trading alerts')
+  unreadNotifications.value = Math.max(0, unreadNotifications.value - 1)
+}
+
+// Lifecycle
+onMounted(() => {
+  updateMarketStatus()
+  // Update market status every minute
+  setInterval(updateMarketStatus, 60000)
+})
 </script>
