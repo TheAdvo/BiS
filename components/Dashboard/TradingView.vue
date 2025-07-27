@@ -1,5 +1,5 @@
 <template>
-  <Card class="h-full">
+  <Card class="h-full w-full">
     <CardHeader class="border-b">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">

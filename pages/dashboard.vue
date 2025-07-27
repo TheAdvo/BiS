@@ -15,7 +15,7 @@ definePageMeta({
 <template>
   <div class="min-h-screen bg-background">
     <SidebarProvider>
-      <div class="flex min-h-screen">
+      <div class="flex min-h-screen w-full">
         <!-- Enhanced Sidebar -->
         <Sidebar class="min-h-screen border-r">
           <SidebarHeader class="border-b px-6 py-4">
@@ -67,20 +67,20 @@ definePageMeta({
         </Sidebar>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col w-full">
           <!-- Header -->
           <DashboardHeader />
 
           <!-- Dashboard Content -->
-          <main class="flex-1 p-6 bg-background">
-            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 h-full">
+          <main class="flex-1 p-6 bg-background w-full">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 h-full w-full">
               <!-- Left side - Chart (3 columns) -->
-              <div class="xl:col-span-3">
+              <div class="xl:col-span-3 w-full">
                 <DashboardTradingView />
               </div>
 
               <!-- Right side - Data panels (1 column) -->
-              <div class="space-y-6">
+              <div class="space-y-6 w-full">
                 <DashboardMarketStatus />
                 <DashboardAccountData />
                 <DashboardLivePricing />
