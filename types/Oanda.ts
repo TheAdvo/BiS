@@ -12,18 +12,44 @@ export interface OandaAccount {
   marginAvailable: string;
   /** Number of currently open trades */
   openTradeCount: number;
+  /** Number of currently open positions */
+  openPositionCount: number;
+  /** Number of pending orders */
+  pendingOrderCount: number;
   /** Profit/Loss that can be reset */
   resettablePL: string;
   /** Total value of all positions */
   positionValue: string;
   /** Currently used margin */
   marginUsed: string;
+  /** Unrealized P&L from open positions */
+  unrealizedPL: string;
   /** Optional account alias/nickname */
   alias?: string;
   /** Account base currency (e.g., 'USD', 'EUR') */
   currency: string;
   /** Unique account identifier */
   accountID: string;
+  /** Array of position details */
+  positions?: Array<{
+    instrument: string;
+    pl: string;
+    unrealizedPL: string;
+    long: {
+      units: string;
+      pl: string;
+      unrealizedPL: string;
+    };
+    short: {
+      units: string;
+      pl: string;
+      unrealizedPL: string;
+    };
+  }>;
+  /** Array of open trades */
+  trades?: Array<any>;
+  /** Array of pending orders */
+  orders?: Array<any>;
 }
 
 /**
