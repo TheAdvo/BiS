@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar'
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from '@/components/ui/sidebar'
 import DashboardHeader from '@/components/Dashboard/Header.vue'
 import DashboardAccountData from '@/components/Dashboard/AccountData.vue'
 import DashboardLivePricing from '@/components/Dashboard/LivePricingSimple.vue'
@@ -16,51 +16,51 @@ definePageMeta({
   <div class="min-h-screen bg-background">
     <SidebarProvider>
       <div class="flex min-h-screen w-full">
-        <!-- Enhanced Sidebar -->
-        <Sidebar class="min-h-screen border-r">
+        <!-- Enhanced Collapsible Sidebar -->
+        <Sidebar collapsible="icon" class="min-h-screen border-r">
           <SidebarHeader class="border-b px-6 py-4">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span class="text-primary-foreground font-bold text-sm">B</span>
+                <span class="text-primary-foreground font-bold text-sm">AD</span>
               </div>
-              <span class="text-lg font-bold">BiS Trading</span>
+              <span class="text-lg font-bold">ADVOAI Engine</span>
             </div>
           </SidebarHeader>
           <SidebarMenu class="px-3 py-4">
             <SidebarMenuItem>
-              <SidebarMenuButton as="a" href="/dashboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+              <SidebarMenuButton as="a" href="/dashboard" tooltip="Overview">
                 <Icon name="lucide:layout-dashboard" class="h-4 w-4" />
-                Overview
+                <span>Overview</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as="a" href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+              <SidebarMenuButton as="a" href="#" tooltip="Account">
                 <Icon name="lucide:wallet" class="h-4 w-4" />
-                Account
+                <span>Account</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as="a" href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+              <SidebarMenuButton as="a" href="#" tooltip="Positions">
                 <Icon name="lucide:briefcase" class="h-4 w-4" />
-                Positions
+                <span>Positions</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as="a" href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+              <SidebarMenuButton as="a" href="#" tooltip="Trades">
                 <Icon name="lucide:trending-up" class="h-4 w-4" />
-                Trades
+                <span>Trades</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as="a" href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+              <SidebarMenuButton as="a" href="#" tooltip="Analytics">
                 <Icon name="lucide:bar-chart-3" class="h-4 w-4" />
-                Analytics
+                <span>Analytics</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as="a" href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+              <SidebarMenuButton as="a" href="#" tooltip="Settings">
                 <Icon name="lucide:settings" class="h-4 w-4" />
-                Settings
+                <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

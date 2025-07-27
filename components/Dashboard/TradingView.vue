@@ -1,15 +1,15 @@
 <template>
   <Card class="h-full w-full">
-    <CardHeader class="border-b">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
+    <CardHeader class="">
+      <div class="flex items-end justify-between">
+        <div class="flex items-end gap-3">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
             <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
             <span class="text-xl font-bold">{{ selectedSymbol || 'EUR/USD' }}</span>
           </CardTitle>
 
           <!-- Price display -->
-          <div class="flex items-center gap-3 text-sm">
+          <div class="flex items-end text-sm">
             <div class="flex flex-col">
               <span class="text-2xl font-bold text-green-600">1.0845</span>
               <span class="text-xs text-muted-foreground">+0.0012 (+0.11%)</span>
@@ -17,7 +17,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-end gap-2">
           <!-- Quick timeframe buttons -->
           <div class="flex items-center bg-muted rounded-lg p-1">
             <Button v-for="tf in quickTimeframes" :key="tf.value" :variant="selectedTimeframe === tf.value ? 'default' : 'ghost'" size="sm" class="h-7 px-3 text-xs" @click="updateTimeframe(tf.value)">

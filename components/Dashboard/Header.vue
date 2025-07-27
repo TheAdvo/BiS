@@ -1,9 +1,10 @@
 <template>
   <header class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
     <div class="flex h-14 items-center px-6">
-      <!-- Left side - App title -->
+      <!-- Left side - Sidebar trigger and App title -->
       <div class="flex items-center gap-4">
-        <h1 class="text-xl font-semibold">Trading Dashboard</h1>
+        <SidebarTrigger />
+        <h1 class="text-xl font-semibold">ADVOAI Engine</h1>
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
           <span class="text-sm text-muted-foreground">Live</span>
@@ -49,4 +50,5 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 </script>
