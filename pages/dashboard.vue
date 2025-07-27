@@ -2,7 +2,7 @@
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar'
 import DashboardHeader from '@/components/Dashboard/Header.vue'
 import DashboardAccountData from '@/components/Dashboard/AccountData.vue'
-import DashboardLivePricing from '@/components/Dashboard/LivePricing.vue'
+import DashboardLivePricing from '@/components/Dashboard/LivePricingSimple.vue'
 import DashboardMarketStatus from '@/components/Dashboard/MarketStatus.vue'
 import DashboardTradingView from '@/components/Dashboard/TradingView.vue'
 

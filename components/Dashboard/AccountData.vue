@@ -1,86 +1,75 @@
 <template>
-  <div class="w-full h-[500px]">
-    <Card v-if="account" class="h-full">
-      <CardHeader>
-        <div class="flex items-center gap-2">
-          <CardTitle class="text-2xl font-bold text-primary">Account Summary</CardTitle>
-          <Badge :variant="account.alias?.includes('live') ? 'default' : 'secondary'">
-            {{ account.alias?.includes('live') ? 'Live' : 'Demo' }}
-          </Badge>
+  <div class="w-full h-[400px]">
+    <Card v-if="account" class="h-full border-0 shadow-lg bg-card/50 backdrop-blur">
+      <CardHeader class="pb-3 border-b">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <CardTitle class="text-base font-bold">Account Summary</CardTitle>
+            <Badge :variant="account.alias?.includes('live') ? 'default' : 'secondary'" class="text-xs">
+              {{ account.alias?.includes('live') ? 'Live' : 'Demo' }}
+            </Badge>
+          </div>
         </div>
-        <CardDescription>Live OANDA stats for your trading account</CardDescription>
       </CardHeader>
-      <CardContent class="overflow-y-auto h-[400px]">
-        <div class="overflow-x-auto w-full">
-          <Table>
-            <caption class="sr-only">OANDA Account Summary Table</caption>
-            <TableBody>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Balance</TableCell>
-                <TableCell>
-                  <span class="mr-1">{{ getFlag(account.currency) }}</span>
-                  {{ formattedAccount?.balance }}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">PnL (Unrealized)</TableCell>
-                <TableCell :class="Number(account.pl) >= 0 ? 'text-primary' : 'text-destructive'">
-                  {{ formattedAccount?.pl }}
-                  <span v-if="previousPL !== null">
-                    <span v-if="Number(account.pl) > previousPL" class="text-primary">▲</span>
-                    <span v-else-if="Number(account.pl) < previousPL" class="text-destructive">▼</span>
-                  </span>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">NAV</TableCell>
-                <TableCell>{{ formattedAccount?.NAV }}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Realized PnL</TableCell>
-                <TableCell class="text-primary">{{ formattedAccount?.resettablePL }}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Position Value</TableCell>
-                <TableCell>{{ formattedAccount?.positionValue }}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Margin Used</TableCell>
-                <TableCell>{{ formattedAccount?.marginUsed }}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Margin Available</TableCell>
-                <TableCell>{{ formattedAccount?.marginAvailable }}</TableCell>
-              </TableRow>
+      <CardContent class="overflow-y-auto h-[320px] p-3">
+        <div class="space-y-3">
+          <!-- Key Metrics -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 rounded-lg bg-muted/30">
+              <div class="text-xs text-muted-foreground uppercase tracking-wide">Balance</div>
+              <div class="text-lg font-bold flex items-center gap-1">
+                <span>{{ getFlag(account.currency) }}</span>
+                {{ formattedAccount?.balance }}
+              </div>
+            </div>
+            <div class="p-3 rounded-lg bg-muted/30">
+              <div class="text-xs text-muted-foreground uppercase tracking-wide">PnL</div>
+              <div class="text-lg font-bold" :class="Number(account.pl) >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ formattedAccount?.pl }}
+                <span v-if="previousPL !== null" class="text-xs ml-1">
+                  <span v-if="Number(account.pl) > previousPL" class="text-green-500">▲</span>
+                  <span v-else-if="Number(account.pl) < previousPL" class="text-red-500">▼</span>
+                </span>
+              </div>
+            </div>
+          </div>
 
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Open Trades</TableCell>
-                <TableCell>{{ account.openTradeCount }}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger as-child>
-                        <span>Leverage</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Leverage is the ratio of your position value to margin used. Example: "20:1" means $20 position for every $1 margin.
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableCell>
-                <TableCell>{{ formattedAccount?.leverage }}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell scope="row" class="font-medium text-muted-foreground">Account #</TableCell>
-                <TableCell>
-                  <span>{{ formattedAccount?.accountId }}</span>
-                  <button @click="copyAccountId" class="ml-2 px-2 py-1 rounded bg-accent text-accent-foreground text-xs" title="Copy Account Number">Copy</button>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <!-- Account Details -->
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between py-1">
+              <span class="text-muted-foreground">NAV</span>
+              <span class="font-medium">{{ formattedAccount?.NAV }}</span>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-muted-foreground">Margin Used</span>
+              <span class="font-medium">{{ formattedAccount?.marginUsed }}</span>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-muted-foreground">Margin Available</span>
+              <span class="font-medium">{{ formattedAccount?.marginAvailable }}</span>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-muted-foreground">Open Trades</span>
+              <span class="font-medium">{{ account.openTradeCount }}</span>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-muted-foreground">Leverage</span>
+              <span class="font-medium">{{ formattedAccount?.leverage }}</span>
+            </div>
+          </div>
+
+          <!-- Account ID -->
+          <div class="border-t pt-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-muted-foreground">Account #</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono">{{ formattedAccount?.accountId }}</span>
+                <Button variant="ghost" size="sm" class="h-6 w-6 p-0" @click="copyAccountId">
+                  <Icon name="lucide:copy" class="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -102,9 +91,9 @@
 
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableRow, TableCell } from '@/components/ui/table'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { OandaAccount } from '@/types/Oanda'
 
 const { data, pending, error } = useOandaAccount();
