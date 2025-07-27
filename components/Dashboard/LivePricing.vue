@@ -1,214 +1,216 @@
 <template>
-  <Card class="w-full text-muted-foreground">
-    <CardHeader>
-      <CardTitle>
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <span class="text-2xl font-bold text-primary">Live Pricing</span>
-            <span :class="[
-              'inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium',
-              sseStatus === 'connected' ? 'bg-primary text-primary-foreground' :
-                sseStatus === 'connecting' ? 'bg-chart-2 text-white' :
-                  'bg-destructive text-destructive-foreground'
-            ]">
-              <span class="w-2 h-2 rounded-full" :class="[
-                sseStatus === 'connected' ? 'bg-chart-1 animate-pulse' :
-                  sseStatus === 'connecting' ? 'bg-chart-2/70 animate-spin' :
-                    'bg-destructive/80'
-              ]"></span>
-              {{ sseStatus === 'connected' ? 'Live' : sseStatus === 'connecting' ? 'Connecting' : 'Disconnected' }}
-            </span>
+  <div class="w-full h-[500px]">
+    <Card class="w-full text-muted-foreground h-full">
+      <CardHeader>
+        <CardTitle>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <span class="text-2xl font-bold text-primary">Live Pricing</span>
+              <span :class="[
+                'inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium',
+                sseStatus === 'connected' ? 'bg-primary text-primary-foreground' :
+                  sseStatus === 'connecting' ? 'bg-chart-2 text-white' :
+                    'bg-destructive text-destructive-foreground'
+              ]">
+                <span class="w-2 h-2 rounded-full" :class="[
+                  sseStatus === 'connected' ? 'bg-chart-1 animate-pulse' :
+                    sseStatus === 'connecting' ? 'bg-chart-2/70 animate-spin' :
+                      'bg-destructive/80'
+                ]"></span>
+                {{ sseStatus === 'connected' ? 'Live' : sseStatus === 'connecting' ? 'Connecting' : 'Disconnected' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-muted-foreground">
+                {{ Object.keys(prices).length }} pairs
+              </span>
+              <button @click="reconnect" :disabled="sseStatus === 'connecting'" class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded disabled:opacity-50 transition-colors">
+                Reconnect
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-muted-foreground">
-              {{ Object.keys(prices).length }} pairs
-            </span>
-            <button @click="reconnect" :disabled="sseStatus === 'connecting'" class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded disabled:opacity-50 transition-colors">
-              Reconnect
-            </button>
-          </div>
-        </div>
-      </CardTitle>
-      <CardDescription>Live OANDA pricing for defined pairs. Last update: {{ lastUpdate || 'Never' }}</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <TooltipProvider>
-        <div v-if="error" class="text-destructive-foreground p-3 rounded bg-destructive/10 border border-destructive/20 mb-4">
-          {{ error }}
-          <button @click="error = null" class="ml-2 text-xs underline hover:no-underline">Dismiss</button>
-        </div>
-
-        <!-- Loading State -->
-        <div v-if="Object.keys(prices).length === 0 && !error" class="space-y-3">
-          <Skeleton class="w-32 h-4" />
-          <Skeleton class="w-48 h-6" />
-          <Skeleton class="w-full h-20" />
-        </div>
-
-        <!-- Search and Filter -->
-        <div v-if="Object.keys(prices).length > 0 || availableInstruments.length > 0" class="mb-4 space-y-2">
-          <div class="flex flex-col sm:flex-row gap-2">
-            <input v-model="searchQuery" placeholder="Search currency pairs..." class="px-3 py-2 border border-border bg-background text-foreground rounded text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-ring" />
+        </CardTitle>
+        <CardDescription>Live OANDA pricing for defined pairs. Last update: {{ lastUpdate || 'Never' }}</CardDescription>
+      </CardHeader>
+      <CardContent class="overflow-y-auto h-[400px]">
+        <TooltipProvider>
+          <div v-if="error" class="text-destructive-foreground p-3 rounded bg-destructive/10 border border-destructive/20 mb-4">
+            {{ error }}
+            <button @click="error = null" class="ml-2 text-xs underline hover:no-underline">Dismiss</button>
           </div>
 
-          <!-- Instrument Category Filter -->
-          <div class="flex flex-wrap gap-2">
-            <button @click="setInstrumentFilter('all')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
-              instrumentFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
-              All ({{ availableInstruments.length }})
-            </button>
-            <button @click="setInstrumentFilter('major')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
-              instrumentFilter === 'major' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
-              Major ({{ majorPairs.length }})
-            </button>
-            <button @click="setInstrumentFilter('minor')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
-              instrumentFilter === 'minor' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
-              Minor ({{ minorPairs.length }})
-            </button>
-            <button @click="setInstrumentFilter('exotic')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
-              instrumentFilter === 'exotic' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
-              Exotic ({{ exoticPairs.length }})
-            </button>
-            <button @click="refreshInstruments" :disabled="instrumentsLoading" class="px-3 py-1 rounded text-xs font-medium bg-chart-2 text-white hover:bg-chart-2/80 disabled:opacity-50 transition-colors">
-              {{ instrumentsLoading ? 'Loading...' : 'Refresh Pairs' }}
-            </button>
+          <!-- Loading State -->
+          <div v-if="Object.keys(prices).length === 0 && !error" class="space-y-3">
+            <Skeleton class="w-32 h-4" />
+            <Skeleton class="w-48 h-6" />
+            <Skeleton class="w-full h-20" />
           </div>
-        </div>
 
-        <!-- Pricing Table -->
-        <div v-if="Object.keys(prices).length > 0" class="overflow-x-auto">
-          <table aria-label="Live currency pricing table" class="min-w-full text-left border-separate border-spacing-y-1">
-            <thead>
-              <tr class="text-xs">
-                <th class="px-3 py-2 font-semibold text-muted-foreground">Pair</th>
-                <th class="px-3 py-2 font-semibold text-muted-foreground">Bid</th>
-                <th class="px-3 py-2 font-semibold text-muted-foreground">Ask</th>
-                <th class="px-3 py-2 font-semibold text-muted-foreground">Spread</th>
-                <th class="px-3 py-2 font-semibold text-muted-foreground">Change</th>
-                <th class="px-3 py-2 font-semibold text-muted-foreground">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-for="(price, pairKey) in paginatedPrices" :key="pairKey">
-                <tr class="bg-card/50 hover:bg-card transition-colors">
-                  <!-- Pair -->
-                  <td class="px-3 py-2 font-medium text-sm">
-                    <div class="flex items-center gap-2">
-                      <span class="text-lg">{{ getFlag(String(pairKey).split('_')[0]) }}{{ getFlag(String(pairKey).split('_')[1]) }}</span>
-                      <span class="font-mono">{{ String(pairKey).replace('_', '/') }}</span>
-                    </div>
-                  </td>
-                  <!-- Bid -->
-                  <td class="px-3 py-2 font-mono text-sm">
-                    <Tooltip>
-                      <TooltipTrigger as-child>
-                        <div class="flex items-center gap-2">
-                          <span>{{ formatPrice(price?.bids?.[0]?.price) }}</span>
-                          <span v-if="previousPrices[String(pairKey)] !== undefined" class="text-xs">
-                            <span v-if="Number(price?.bids?.[0]?.price) > previousPrices[String(pairKey)]" class="text-chart-1">▲</span>
-                            <span v-else-if="Number(price?.bids?.[0]?.price) < previousPrices[String(pairKey)]" class="text-destructive">▼</span>
-                            <span v-else class="text-muted-foreground">●</span>
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Sell price - The price at which you can sell the base currency
-                      </TooltipContent>
-                    </Tooltip>
-                  </td>
-                  <!-- Ask -->
-                  <td class="px-3 py-2 font-mono text-sm">
-                    <Tooltip>
-                      <TooltipTrigger as-child>
-                        <span>{{ formatPrice(price?.asks?.[0]?.price) }}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Buy price - The price at which you can buy the base currency
-                      </TooltipContent>
-                    </Tooltip>
-                  </td>
-                  <!-- Spread -->
-                  <td class="px-3 py-2 font-mono text-sm">
-                    <Tooltip>
-                      <TooltipTrigger as-child>
-                        <span class="px-2 py-1 bg-muted/50 text-muted-foreground rounded text-xs">
-                          {{ calculateSpread(price) }}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Spread ({{ calculateSpreadPips(price) }} pips) - Difference between ask and bid
-                      </TooltipContent>
-                    </Tooltip>
-                  </td>
-                  <!-- Price Change -->
-                  <td class="px-3 py-2 text-sm">
-                    <span v-if="previousPrices[String(pairKey)] !== undefined" :class="[
-                      'px-2 py-1 rounded text-xs font-medium',
-                      Number(price?.bids?.[0]?.price) > previousPrices[String(pairKey)] ? 'bg-chart-1/20 text-chart-1 border border-chart-1/30' :
-                        Number(price?.bids?.[0]?.price) < previousPrices[String(pairKey)] ? 'bg-destructive/20 text-destructive border border-destructive/30' :
-                          'bg-muted text-muted-foreground border border-border'
-                    ]">
-                      {{ getPriceChange(price, String(pairKey)) }}
-                    </span>
-                    <span v-else class="text-xs text-muted-foreground">—</span>
-                  </td>
-                  <!-- Time -->
-                  <td class="px-3 py-2 text-xs text-muted-foreground">
-                    <Tooltip>
-                      <TooltipTrigger as-child>
-                        <span>{{ formatTime(price.time) }}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Last updated: {{ price.time ? new Date(price.time).toLocaleString() : 'Unknown' }}
-                      </TooltipContent>
-                    </Tooltip>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-
-          <!-- Pagination Controls -->
-          <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 px-2">
-            <div class="text-xs text-muted-foreground">
-              Showing {{ (currentPage * itemsPerPage) + 1 }}-{{ Math.min((currentPage + 1) * itemsPerPage, Object.keys(filteredPrices).length) }}
-              of {{ Object.keys(filteredPrices).length }} pairs
+          <!-- Search and Filter -->
+          <div v-if="Object.keys(prices).length > 0 || availableInstruments.length > 0" class="mb-4 space-y-2">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input v-model="searchQuery" placeholder="Search currency pairs..." class="px-3 py-2 border border-border bg-background text-foreground rounded text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
-            <div class="flex items-center gap-2">
-              <button @click="prevPage" :disabled="!canGoPrev" class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                ← Prev
+            <!-- Instrument Category Filter -->
+            <div class="flex flex-wrap gap-2">
+              <button @click="setInstrumentFilter('all')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
+                instrumentFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
+                All ({{ availableInstruments.length }})
               </button>
+              <button @click="setInstrumentFilter('major')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
+                instrumentFilter === 'major' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
+                Major ({{ majorPairs.length }})
+              </button>
+              <button @click="setInstrumentFilter('minor')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
+                instrumentFilter === 'minor' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
+                Minor ({{ minorPairs.length }})
+              </button>
+              <button @click="setInstrumentFilter('exotic')" :class="['px-3 py-1 rounded text-xs font-medium transition-colors',
+                instrumentFilter === 'exotic' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80']">
+                Exotic ({{ exoticPairs.length }})
+              </button>
+              <button @click="refreshInstruments" :disabled="instrumentsLoading" class="px-3 py-1 rounded text-xs font-medium bg-chart-2 text-white hover:bg-chart-2/80 disabled:opacity-50 transition-colors">
+                {{ instrumentsLoading ? 'Loading...' : 'Refresh Pairs' }}
+              </button>
+            </div>
+          </div>
 
-              <!-- Page Numbers -->
-              <div class="flex items-center gap-1">
-                <template v-for="page in Math.min(totalPages, 5)" :key="page">
-                  <button @click="goToPage(page - 1)" :class="[
-                    'w-6 h-6 text-xs rounded transition-colors',
-                    currentPage === page - 1
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
-                  ]">
-                    {{ page }}
-                  </button>
+          <!-- Pricing Table -->
+          <div v-if="Object.keys(prices).length > 0" class="overflow-x-auto">
+            <table aria-label="Live currency pricing table" class="min-w-full text-left border-separate border-spacing-y-1">
+              <thead>
+                <tr class="text-xs">
+                  <th class="px-3 py-2 font-semibold text-muted-foreground">Pair</th>
+                  <th class="px-3 py-2 font-semibold text-muted-foreground">Bid</th>
+                  <th class="px-3 py-2 font-semibold text-muted-foreground">Ask</th>
+                  <th class="px-3 py-2 font-semibold text-muted-foreground">Spread</th>
+                  <th class="px-3 py-2 font-semibold text-muted-foreground">Change</th>
+                  <th class="px-3 py-2 font-semibold text-muted-foreground">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="(price, pairKey) in paginatedPrices" :key="pairKey">
+                  <tr class="bg-card/50 hover:bg-card transition-colors">
+                    <!-- Pair -->
+                    <td class="px-3 py-2 font-medium text-sm">
+                      <div class="flex items-center gap-2">
+                        <span class="text-lg">{{ getFlag(String(pairKey).split('_')[0]) }}{{ getFlag(String(pairKey).split('_')[1]) }}</span>
+                        <span class="font-mono">{{ String(pairKey).replace('_', '/') }}</span>
+                      </div>
+                    </td>
+                    <!-- Bid -->
+                    <td class="px-3 py-2 font-mono text-sm">
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <div class="flex items-center gap-2">
+                            <span>{{ formatPrice(price?.bids?.[0]?.price) }}</span>
+                            <span v-if="previousPrices[String(pairKey)] !== undefined" class="text-xs">
+                              <span v-if="Number(price?.bids?.[0]?.price) > previousPrices[String(pairKey)]" class="text-chart-1">▲</span>
+                              <span v-else-if="Number(price?.bids?.[0]?.price) < previousPrices[String(pairKey)]" class="text-destructive">▼</span>
+                              <span v-else class="text-muted-foreground">●</span>
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Sell price - The price at which you can sell the base currency
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
+                    <!-- Ask -->
+                    <td class="px-3 py-2 font-mono text-sm">
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <span>{{ formatPrice(price?.asks?.[0]?.price) }}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Buy price - The price at which you can buy the base currency
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
+                    <!-- Spread -->
+                    <td class="px-3 py-2 font-mono text-sm">
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <span class="px-2 py-1 bg-muted/50 text-muted-foreground rounded text-xs">
+                            {{ calculateSpread(price) }}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Spread ({{ calculateSpreadPips(price) }} pips) - Difference between ask and bid
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
+                    <!-- Price Change -->
+                    <td class="px-3 py-2 text-sm">
+                      <span v-if="previousPrices[String(pairKey)] !== undefined" :class="[
+                        'px-2 py-1 rounded text-xs font-medium',
+                        Number(price?.bids?.[0]?.price) > previousPrices[String(pairKey)] ? 'bg-chart-1/20 text-chart-1 border border-chart-1/30' :
+                          Number(price?.bids?.[0]?.price) < previousPrices[String(pairKey)] ? 'bg-destructive/20 text-destructive border border-destructive/30' :
+                            'bg-muted text-muted-foreground border border-border'
+                      ]">
+                        {{ getPriceChange(price, String(pairKey)) }}
+                      </span>
+                      <span v-else class="text-xs text-muted-foreground">—</span>
+                    </td>
+                    <!-- Time -->
+                    <td class="px-3 py-2 text-xs text-muted-foreground">
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <span>{{ formatTime(price.time) }}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Last updated: {{ price.time ? new Date(price.time).toLocaleString() : 'Unknown' }}
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
+                  </tr>
                 </template>
-                <span v-if="totalPages > 5" class="text-xs text-muted-foreground px-1">...</span>
+              </tbody>
+            </table>
+
+            <!-- Pagination Controls -->
+            <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 px-2">
+              <div class="text-xs text-muted-foreground">
+                Showing {{ (currentPage * itemsPerPage) + 1 }}-{{ Math.min((currentPage + 1) * itemsPerPage, Object.keys(filteredPrices).length) }}
+                of {{ Object.keys(filteredPrices).length }} pairs
               </div>
 
-              <button @click="nextPage" :disabled="!canGoNext" class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                Next →
-              </button>
+              <div class="flex items-center gap-2">
+                <button @click="prevPage" :disabled="!canGoPrev" class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  ← Prev
+                </button>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1">
+                  <template v-for="page in Math.min(totalPages, 5)" :key="page">
+                    <button @click="goToPage(page - 1)" :class="[
+                      'w-6 h-6 text-xs rounded transition-colors',
+                      currentPage === page - 1
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
+                    ]">
+                      {{ page }}
+                    </button>
+                  </template>
+                  <span v-if="totalPages > 5" class="text-xs text-muted-foreground px-1">...</span>
+                </div>
+
+                <button @click="nextPage" :disabled="!canGoNext" class="px-2 py-1 text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                  Next →
+                </button>
+              </div>
+            </div>
+
+            <!-- No results message -->
+            <div v-if="Object.keys(filteredPrices).length === 0" class="text-center py-8 text-muted-foreground">
+              No currency pairs match your search.
             </div>
           </div>
-
-          <!-- No results message -->
-          <div v-if="Object.keys(filteredPrices).length === 0" class="text-center py-8 text-muted-foreground">
-            No currency pairs match your search.
-          </div>
-        </div>
-      </TooltipProvider>
-    </CardContent>
-  </Card>
+        </TooltipProvider>
+      </CardContent>
+    </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
