@@ -212,6 +212,24 @@ class OandaApiClient {
   }
 
   /**
+   * Get positions data with short-term caching
+   */
+  async getPositions() {
+    return this.request(`/accounts/${this.config.accountId}/positions`, {
+      cacheTTL: 10000 // 10 seconds for positions
+    })
+  }
+
+  /**
+   * Get trades data with short-term caching
+   */
+  async getTrades() {
+    return this.request(`/accounts/${this.config.accountId}/trades`, {
+      cacheTTL: 10000 // 10 seconds for trades
+    })
+  }
+
+  /**
    * Invalidate cache for specific endpoints
    */
   invalidateCache(pattern?: string) {

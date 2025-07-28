@@ -6,8 +6,8 @@
         <SidebarTrigger />
         <h1 class="text-xl font-semibold">ADVOAI Engine</h1>
         <div class="flex items-center gap-2">
-          <div class="w-2 h-2 bg-green-600 rounded-full"></div>
-          <span class="text-sm text-muted-foreground">Live</span>
+          <div class="w-2 h-2 rounded-full" :class="accountTypeIndicatorColor"></div>
+          <span class="text-sm text-muted-foreground">{{ accountTypeIndicator }}</span>
         </div>
       </div>
 
@@ -38,9 +38,9 @@
         <!-- User menu -->
         <div class="flex items-center gap-2 pl-2 border-l">
           <div class="text-right text-sm">
-            <div class="font-medium">Live Account</div>
-            <div class="text-xs" :class="accountStatus === 'connected' ? 'text-green-600' : 'text-red-600'">
-              {{ accountStatus === 'connected' ? 'Connected' : 'Disconnected' }}
+            <div class="font-medium">{{ accountTypeText }}</div>
+            <div class="text-xs" :class="accountStatusColor">
+              {{ accountStatusText }}
             </div>
           </div>
           <Button variant="ghost" size="sm" class="h-8 w-8 p-0 rounded-full">
@@ -58,27 +58,76 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
-// Reactive state
-const unreadNotifications = ref(3)
-const marketStatus = ref('open')
-const accountStatus = ref('connected')
+// Get OANDA account data
+const { data: accountData, pending: accountPending, error: accountError } = useOandaAccount()
 
-// Update market status based on time
+// Reactive state
+const unreadNotifications = ref(0) // Start with 0, will be populated from real data
+const marketStatus = ref('closed') // Will be calculated based on forex market hours
+
+// Update forex market status based on time
 const updateMarketStatus = () => {
   const now = new Date()
+
+  // Get current time in different forex market timezones
+  const nySundayOpen = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
   const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
   const day = nyTime.getDay()
   const hour = nyTime.getHours()
+  const minutes = nyTime.getMinutes()
+  const totalMinutes = hour * 60 + minutes
 
-  // Simple market hours check (9:30 AM - 4:00 PM ET, Monday-Friday)
-  if (day >= 1 && day <= 5 && hour >= 9.5 && hour < 16) {
-    marketStatus.value = 'open'
-  } else {
-    marketStatus.value = 'closed'
+  // Forex market hours: Sunday 5:00 PM ET to Friday 5:00 PM ET
+  let isOpen = false
+
+  if (day === 0) {
+    // Sunday: Open from 5:00 PM onwards
+    isOpen = totalMinutes >= 17 * 60 // 5:00 PM
+  } else if (day >= 1 && day <= 4) {
+    // Monday to Thursday: Open all day
+    isOpen = true
+  } else if (day === 5) {
+    // Friday: Open until 5:00 PM
+    isOpen = totalMinutes < 17 * 60 // Before 5:00 PM
+  } else if (day === 6) {
+    // Saturday: Closed
+    isOpen = false
   }
+
+  marketStatus.value = isOpen ? 'open' : 'closed'
 }
 
-// Computed properties
+// Computed properties for account data
+const accountTypeText = computed(() => {
+  if (accountPending.value) return 'Loading...'
+  if (accountError.value) return 'Error'
+  if (!accountData.value) return 'No Account'
+
+  // Determine if it's a live or demo account based on account alias or ID
+  const alias = accountData.value.alias?.toLowerCase() || ''
+  const accountId = accountData.value.accountID || ''
+
+  if (alias.includes('live') || accountId.includes('001')) {
+    return 'Live Account'
+  } else {
+    return 'Demo Account'
+  }
+})
+
+const accountStatusText = computed(() => {
+  if (accountPending.value) return 'Connecting...'
+  if (accountError.value) return 'Disconnected'
+  if (!accountData.value) return 'Disconnected'
+  return 'Connected'
+})
+
+const accountStatusColor = computed(() => {
+  if (accountPending.value) return 'text-yellow-600'
+  if (accountError.value) return 'text-red-600'
+  if (!accountData.value) return 'text-red-600'
+  return 'text-green-600'
+})
+
 const marketBadgeText = computed(() => {
   return marketStatus.value === 'open' ? 'Open' : 'Closed'
 })
@@ -87,11 +136,68 @@ const marketBadgeColor = computed(() => {
   return marketStatus.value === 'open' ? 'bg-green-600' : 'bg-red-600'
 })
 
+const accountTypeIndicator = computed(() => {
+  if (accountPending.value) return 'Loading'
+  if (accountError.value) return 'Error'
+  if (!accountData.value) return 'Offline'
+
+  const alias = accountData.value.alias?.toLowerCase() || ''
+  const accountId = accountData.value.accountID || ''
+
+  if (alias.includes('live') || accountId.includes('001')) {
+    return 'Live'
+  } else {
+    return 'Demo'
+  }
+})
+
+const accountTypeIndicatorColor = computed(() => {
+  if (accountPending.value) return 'bg-yellow-500'
+  if (accountError.value) return 'bg-red-600'
+  if (!accountData.value) return 'bg-gray-500'
+
+  const alias = accountData.value.alias?.toLowerCase() || ''
+  const accountId = accountData.value.accountID || ''
+
+  if (alias.includes('live') || accountId.includes('001')) {
+    return 'bg-green-600' // Live account - green
+  } else {
+    return 'bg-blue-500' // Demo account - blue
+  }
+})
+
 // Actions
 const toggleNotifications = () => {
   const logger = useLogger()
-  logger.info('Notifications', 'You have 3 unread trading alerts')
-  unreadNotifications.value = Math.max(0, unreadNotifications.value - 1)
+
+  if (unreadNotifications.value > 0) {
+    // Provide context-aware notification messages
+    const messages = []
+
+    if (accountData.value?.openTradeCount && accountData.value.openTradeCount > 0) {
+      messages.push(`${accountData.value.openTradeCount} open trade(s)`)
+    }
+
+    if (accountData.value?.pendingOrderCount && accountData.value.pendingOrderCount > 0) {
+      messages.push(`${accountData.value.pendingOrderCount} pending order(s)`)
+    }
+
+    const pl = parseFloat(accountData.value?.pl || '0')
+    if (Math.abs(pl) > 100) {
+      const plFormatted = pl >= 0 ? `+$${pl.toFixed(2)}` : `-$${Math.abs(pl).toFixed(2)}`
+      messages.push(`P&L: ${plFormatted}`)
+    }
+
+    if (messages.length > 0) {
+      logger.info('Notifications', `Trading alerts: ${messages.join(', ')}`)
+    } else {
+      logger.info('Notifications', 'Trading activity detected')
+    }
+
+    unreadNotifications.value = Math.max(0, unreadNotifications.value - 1)
+  } else {
+    logger.info('Notifications', 'No new notifications')
+  }
 }
 
 // Lifecycle
@@ -102,6 +208,32 @@ onMounted(() => {
   // Update market status every minute
   marketStatusInterval = setInterval(updateMarketStatus, 60000)
 })
+
+// Watch for account data changes to update notifications
+watch(() => accountData.value, (newAccountData) => {
+  if (newAccountData) {
+    // Set notifications based on actual trading activity
+    let notifications = 0
+
+    // Add notification for each open trade
+    if (newAccountData.openTradeCount > 0) {
+      notifications += newAccountData.openTradeCount
+    }
+
+    // Add notification for pending orders
+    if (newAccountData.pendingOrderCount > 0) {
+      notifications += newAccountData.pendingOrderCount
+    }
+
+    // Add notification if P&L is significantly positive or negative
+    const pl = parseFloat(newAccountData.pl || '0')
+    if (Math.abs(pl) > 100) { // If P&L is more than $100
+      notifications += 1
+    }
+
+    unreadNotifications.value = Math.min(notifications, 9) // Cap at 9 for display
+  }
+}, { immediate: true })
 
 onUnmounted(() => {
   if (marketStatusInterval) {

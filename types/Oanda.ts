@@ -116,3 +116,85 @@ export interface OandaInstrumentsResponse {
   /** Array of available trading instruments */
   instruments: OandaInstrument[];
 }
+
+/**
+ * OANDA position details for a specific instrument
+ */
+export interface OandaPosition {
+  /** Instrument identifier (e.g., 'EUR_USD') */
+  instrument: string;
+  /** Profit/Loss for the position */
+  pl: string;
+  /** Unrealized Profit/Loss */
+  unrealizedPL: string;
+  /** Overall position value */
+  marginUsed: string;
+  /** Long position details */
+  long: {
+    /** Number of long units */
+    units: string;
+    /** Average price of long position */
+    averagePrice?: string;
+    /** Profit/Loss for long position */
+    pl: string;
+    /** Unrealized P&L for long position */
+    unrealizedPL: string;
+  };
+  /** Short position details */
+  short: {
+    /** Number of short units */
+    units: string;
+    /** Average price of short position */
+    averagePrice?: string;
+    /** Profit/Loss for short position */
+    pl: string;
+    /** Unrealized P&L for short position */
+    unrealizedPL: string;
+  };
+}
+
+/**
+ * OANDA trade details
+ */
+export interface OandaTrade {
+  /** Trade ID */
+  id: string;
+  /** Instrument being traded */
+  instrument: string;
+  /** Current trade units (positive for long, negative for short) */
+  currentUnits: string;
+  /** Initial trade units */
+  initialUnits: string;
+  /** Trade state (OPEN, CLOSED, etc.) */
+  state: string;
+  /** Price at which trade was opened */
+  price: string;
+  /** Time when trade was opened */
+  openTime: string;
+  /** Current profit/loss */
+  unrealizedPL: string;
+  /** Margin required for this trade */
+  marginUsed: string;
+  /** Trade side (BUY/SELL derived from units) */
+  side?: 'BUY' | 'SELL';
+}
+
+/**
+ * Response structure for OANDA positions API endpoint
+ */
+export interface OandaPositionsResponse {
+  /** Array of current positions */
+  positions: OandaPosition[];
+  /** Last transaction ID */
+  lastTransactionID: string;
+}
+
+/**
+ * Response structure for OANDA trades API endpoint
+ */
+export interface OandaTradesResponse {
+  /** Array of current trades */
+  trades: OandaTrade[];
+  /** Last transaction ID */
+  lastTransactionID: string;
+}

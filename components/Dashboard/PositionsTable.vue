@@ -11,7 +11,9 @@
               Live
             </Badge>
           </CardTitle>
-          <div class="text-xs text-muted-foreground">3 active positions</div>
+          <div class="text-xs text-muted-foreground">
+            {{ isLoading ? 'Loading...' : `${activePositionsCount} active ${activePositionsCount === 1 ? 'position' : 'positions'}` }}
+          </div>
         </div>
       </CardHeader>
       <CardContent class="overflow-y-auto h-[430px] p-0">
@@ -29,36 +31,44 @@
         </div>
 
         <!-- Positions List -->
-        <div class="divide-y divide-border">
-          <div v-for="position in mockPositions" :key="position.id" class="grid grid-cols-7 gap-4 px-4 py-4 hover:bg-accent/50 transition-colors">
+        <div v-if="isLoading" class="flex items-center justify-center h-32">
+          <div class="text-sm text-muted-foreground">Loading positions...</div>
+        </div>
+
+        <div v-else-if="hasError" class="flex items-center justify-center h-32">
+          <div class="text-sm text-red-600">Error loading positions</div>
+        </div>
+
+        <div v-else-if="displayTrades.length > 0" class="divide-y divide-border">
+          <div v-for="trade in displayTrades" :key="trade.id" class="grid grid-cols-7 gap-4 px-4 py-4 hover:bg-accent/50 transition-colors">
             <!-- Instrument -->
             <div class="flex items-center gap-2">
-              <span class="text-lg">{{ position.flag }}</span>
+              <span class="text-lg">{{ trade.flag }}</span>
               <div>
-                <div class="font-medium text-sm">{{ position.instrument }}</div>
-                <div class="text-xs text-muted-foreground">{{ position.description }}</div>
+                <div class="font-medium text-sm">{{ trade.instrument }}</div>
+                <div class="text-xs text-muted-foreground">{{ trade.description }}</div>
               </div>
             </div>
 
             <!-- Side -->
             <div>
-              <Badge :variant="position.side === 'LONG' ? 'default' : 'destructive'" class="text-xs">
-                {{ position.side }}
+              <Badge :variant="trade.side === 'LONG' ? 'default' : 'destructive'" class="text-xs">
+                {{ trade.side }}
               </Badge>
             </div>
 
             <!-- Size -->
-            <div class="text-sm font-mono">{{ position.size }}</div>
+            <div class="text-sm font-mono">{{ trade.size }}</div>
 
             <!-- Entry Price -->
-            <div class="text-sm font-mono">{{ position.entryPrice }}</div>
+            <div class="text-sm font-mono">{{ trade.entryPrice }}</div>
 
             <!-- Current Price -->
-            <div class="text-sm font-mono">{{ position.currentPrice }}</div>
+            <div class="text-sm font-mono">{{ trade.currentPrice }}</div>
 
             <!-- P&L -->
-            <div class="text-sm font-mono" :class="position.pnl >= 0 ? 'text-green-500' : 'text-red-500'">
-              {{ position.pnl >= 0 ? '+' : '' }}${{ position.pnl.toFixed(2) }}
+            <div class="text-sm font-mono" :class="trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'">
+              {{ trade.pnl >= 0 ? '+' : '' }}${{ trade.pnl.toFixed(2) }}
             </div>
 
             <!-- Actions -->
@@ -74,7 +84,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-if="mockPositions.length === 0" class="flex flex-col items-center justify-center h-32 text-center">
+        <div v-else class="flex flex-col items-center justify-center h-32 text-center">
           <Briefcase class="w-8 h-8 text-muted-foreground mb-2" />
           <p class="text-sm text-muted-foreground">No open positions</p>
           <Button variant="outline" size="sm" class="mt-2">
@@ -91,42 +101,99 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Briefcase, Settings } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed } from 'vue'
+import type { OandaTrade } from '@/types/Oanda'
 
-// Mock positions data
-const mockPositions = ref([
-  {
-    id: 1,
-    instrument: 'EUR/USD',
-    description: 'Euro / US Dollar',
-    flag: '🇪🇺🇺🇸',
-    side: 'LONG',
-    size: '100,000',
-    entryPrice: '1.0842',
-    currentPrice: '1.0855',
-    pnl: 130.00
-  },
-  {
-    id: 2,
-    instrument: 'GBP/USD',
-    description: 'British Pound / US Dollar',
-    flag: '🇬🇧🇺🇸',
-    side: 'SHORT',
-    size: '50,000',
-    entryPrice: '1.2645',
-    currentPrice: '1.2634',
-    pnl: 55.00
-  },
-  {
-    id: 3,
-    instrument: 'USD/JPY',
-    description: 'US Dollar / Japanese Yen',
-    flag: '🇺🇸🇯🇵',
-    side: 'LONG',
-    size: '75,000',
-    entryPrice: '149.25',
-    currentPrice: '149.18',
-    pnl: -52.50
+// Get real OANDA data
+const { data: positionsData, pending: positionsPending, error: positionsError } = useOandaPositions()
+const { data: tradesData, pending: tradesPending, error: tradesError } = useOandaTrades()
+
+// Helper function to get flag emoji for currency pairs
+const getCurrencyFlag = (instrument: string): string => {
+  const flags: Record<string, string> = {
+    'EUR_USD': '🇪🇺🇺🇸',
+    'GBP_USD': '🇬🇧🇺🇸',
+    'USD_JPY': '🇺🇸🇯🇵',
+    'AUD_USD': '🇦🇺🇺🇸',
+    'USD_CAD': '🇺🇸🇨🇦',
+    'USD_CHF': '🇺🇸🇨🇭',
+    'NZD_USD': '🇳🇿🇺🇸',
+    'EUR_GBP': '🇪🇺🇬🇧',
+    'EUR_JPY': '🇪🇺🇯🇵',
+    'GBP_JPY': '🇬🇧🇯🇵',
+    'XAU_USD': '🥇🇺🇸',
+    'XAG_USD': '🥈🇺🇸'
   }
-])
+  return flags[instrument] || '💱'
+}
+
+// Helper function to format instrument name for display
+const formatInstrument = (instrument: string): string => {
+  return instrument.replace('_', '/')
+}
+
+// Helper function to get instrument description
+const getInstrumentDescription = (instrument: string): string => {
+  const descriptions: Record<string, string> = {
+    'EUR_USD': 'Euro / US Dollar',
+    'GBP_USD': 'British Pound / US Dollar',
+    'USD_JPY': 'US Dollar / Japanese Yen',
+    'AUD_USD': 'Australian Dollar / US Dollar',
+    'USD_CAD': 'US Dollar / Canadian Dollar',
+    'USD_CHF': 'US Dollar / Swiss Franc',
+    'NZD_USD': 'New Zealand Dollar / US Dollar',
+    'EUR_GBP': 'Euro / British Pound',
+    'EUR_JPY': 'Euro / Japanese Yen',
+    'GBP_JPY': 'British Pound / Japanese Yen',
+    'XAU_USD': 'Gold / US Dollar',
+    'XAG_USD': 'Silver / US Dollar'
+  }
+  return descriptions[instrument] || instrument.replace('_', ' / ')
+}
+
+// Helper function to determine trade side
+const getTradeSide = (units: string): 'LONG' | 'SHORT' => {
+  return parseFloat(units) > 0 ? 'LONG' : 'SHORT'
+}
+
+// Helper function to format units
+const formatUnits = (units: string): string => {
+  const num = Math.abs(parseFloat(units))
+  return num.toLocaleString()
+}
+
+// Transform trades data for display
+const displayTrades = computed(() => {
+  if (!tradesData.value?.trades) return []
+
+  return tradesData.value.trades.map((trade: OandaTrade) => ({
+    id: trade.id,
+    instrument: formatInstrument(trade.instrument),
+    description: getInstrumentDescription(trade.instrument),
+    flag: getCurrencyFlag(trade.instrument),
+    side: getTradeSide(trade.currentUnits),
+    size: formatUnits(trade.currentUnits),
+    entryPrice: parseFloat(trade.price).toFixed(5),
+    currentPrice: parseFloat(trade.price).toFixed(5), // We'd need current pricing for this
+    pnl: parseFloat(trade.unrealizedPL),
+    marginUsed: parseFloat(trade.marginUsed).toFixed(2),
+    openTime: new Date(trade.openTime).toLocaleString(),
+    rawTrade: trade
+  }))
+})
+
+// Computed for active positions count
+const activePositionsCount = computed(() => {
+  return displayTrades.value.length
+})
+
+// Check if data is loading
+const isLoading = computed(() => {
+  return positionsPending.value || tradesPending.value
+})
+
+// Check if there's an error
+const hasError = computed(() => {
+  return positionsError.value || tradesError.value
+})
 </script>

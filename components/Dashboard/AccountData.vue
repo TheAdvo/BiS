@@ -63,8 +63,10 @@
             <div class="flex items-center justify-between">
               <span class="text-xs text-muted-foreground">Account #</span>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-mono">{{ formattedAccount?.accountId }}</span>
-                <Button variant="ghost" size="sm" class="h-6 w-6 p-0" @click="copyAccountId">
+                <button @click="toggleAccountIdVisibility" class="text-xs font-mono hover:text-foreground transition-colors cursor-pointer select-none" :title="isAccountIdVisible ? 'Click to hide' : 'Click to reveal'">
+                  {{ isAccountIdVisible ? formattedAccount?.accountId : '•••-•••-••••••••-•••' }}
+                </button>
+                <Button variant="ghost" size="sm" class="h-6 w-6 p-0" @click="copyAccountId" :disabled="!isAccountIdVisible">
                   <Icon name="lucide:copy" class="h-3 w-3" />
                 </Button>
               </div>
@@ -98,6 +100,13 @@ import type { OandaAccount } from '@/types/Oanda'
 
 const { data, pending, error } = useOandaAccount();
 const account = computed<OandaAccount | null>(() => data.value ?? null);
+
+// Account ID visibility state
+const isAccountIdVisible = ref(false);
+
+const toggleAccountIdVisibility = () => {
+  isAccountIdVisible.value = !isAccountIdVisible.value;
+};
 
 /**
  * Calculates account leverage as a ratio (e.g., "20:1").
@@ -167,6 +176,12 @@ watch(() => account.value?.pl, (newPL, oldPL) => {
 })
 
 const copyAccountId = async () => {
+  if (!isAccountIdVisible.value) {
+    // If account ID is hidden, reveal it first
+    isAccountIdVisible.value = true;
+    return;
+  }
+
   const id = formattedAccount.value?.accountId;
   if (id && id !== '—') {
     try {
