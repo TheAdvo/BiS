@@ -50,3 +50,8 @@ export default defineEventHandler(async () => {
     throw createError({ statusCode: 500, statusMessage: 'Unable to connect to OANDA API' });
   }
 });
+
+export interface OandaAccount {
+  // ...other properties...
+  lastTransactionID: string; // or number, depending on API
+}

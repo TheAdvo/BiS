@@ -1,6 +1,9 @@
 // server/api/oanda/pricing-stream.ts
 import { defineEventHandler } from 'h3'
 import https from 'https'
+import { createServerLogger } from '~/server/utils/logger'
+
+const logger = createServerLogger('pricing-stream')
 
 export default defineEventHandler(async (event) => {
   const apiKey = process.env.OANDA_API_KEY!
@@ -88,7 +91,7 @@ export default defineEventHandler(async (event) => {
           JSON.parse(trimmedLine)
           event.node.res.write(`data: ${trimmedLine}\n\n`)
         } catch (e) {
-          console.log('Skipping invalid JSON:', trimmedLine.substring(0, 100) + '...')
+          logger.warn('Skipping invalid JSON', trimmedLine.substring(0, 100) + '...')
         }
       }
     })
@@ -100,7 +103,7 @@ export default defineEventHandler(async (event) => {
           JSON.parse(buffer.trim())
           event.node.res.write(`data: ${buffer.trim()}\n\n`)
         } catch (e) {
-          console.log('Skipping final invalid JSON:', buffer.trim())
+          logger.warn('Skipping final invalid JSON', buffer.trim())
         }
       }
       event.node.res.end()

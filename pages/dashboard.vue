@@ -1,122 +1,48 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { LayoutDashboard, Wallet, Briefcase, TrendingUp, BarChart3, Settings } from "lucide-vue-next"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarHeader,
-} from "@/components/ui/sidebar"
-import DashboardHeader from '@/components/Dashboard/Header.vue'
 import DashboardAccountData from '@/components/Dashboard/AccountData.vue'
 import DashboardLivePricing from '@/components/Dashboard/LivePricingSimple.vue'
 import DashboardMarketStatus from '@/components/Dashboard/MarketStatus.vue'
 import DashboardTradingView from '@/components/Dashboard/TradingView.vue'
 import DashboardQuickStats from '@/components/Dashboard/QuickStats.vue'
 
-// Menu items.
-const items = [
-  {
-    title: "Overview",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Account",
-    url: "#",
-    icon: Wallet,
-  },
-  {
-    title: "Positions",
-    url: "/positions",
-    icon: Briefcase,
-  },
-  {
-    title: "Trades",
-    url: "/trades",
-    icon: TrendingUp,
-  },
-  {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-]
-
-// Set page meta for dark theme
+// Use the dashboard layout
 definePageMeta({
-  layout: false
+  layout: 'dashboard'
+})
+
+// SEO Meta Tags
+useHead({
+  title: 'Dashboard - ADVOAI Trading Engine',
+  meta: [
+    { name: 'description', content: 'Monitor your trading performance, positions, and real-time market data with advanced analytics.' },
+    { name: 'robots', content: 'noindex, nofollow' } // Private dashboard
+  ]
 })
 
 onMounted(() => {
-  console.log('Dashboard loaded', 'Welcome to ADVOAI Trading Engine')
+  const logger = useLogger()
+  logger.info('Dashboard loaded', 'Welcome to ADVOAI Trading Engine')
 })
 </script>
 
 <template>
-  <SidebarProvider>
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div class="flex items-center gap-2 py-2">
-          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <span class="text-primary-foreground font-bold text-sm">AD</span>
-          </div>
-          <span class="text-lg font-bold truncate group-data-[collapsible=icon]:hidden">ADVOAI Engine</span>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Trading Platform</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem v-for="item in items" :key="item.title">
-                <SidebarMenuButton as-child :tooltip="item.title">
-                  <NuxtLink :to="item.url" :class="{ 'bg-accent': $route.path === item.url }">
-                    <component :is="item.icon" />
-                    <span>{{ item.title }}</span>
-                  </NuxtLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-    <main class="flex-1">
-      <!-- Header -->
-      <DashboardHeader />
+  <div class="flex-1 p-6 bg-background">
+    <!-- Quick Stats -->
+    <DashboardQuickStats />
 
-      <!-- Dashboard Content -->
-      <div class="flex-1 p-6 bg-background">
-        <!-- Quick Stats -->
-        <DashboardQuickStats />
-
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 h-full">
-          <!-- Left side - Chart (3 columns) -->
-          <div class="xl:col-span-3">
-            <DashboardTradingView />
-          </div>
-
-          <!-- Right side - Data panels (1 column) -->
-          <div class="space-y-6">
-            <DashboardMarketStatus />
-            <DashboardAccountData />
-            <DashboardLivePricing />
-          </div>
-        </div>
+    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 h-full">
+      <!-- Left side - Chart (3 columns) -->
+      <div class="xl:col-span-3">
+        <DashboardTradingView />
       </div>
-    </main>
-  </SidebarProvider>
+
+      <!-- Right side - Data panels (1 column) -->
+      <div class="space-y-6">
+        <DashboardMarketStatus />
+        <DashboardAccountData />
+        <DashboardLivePricing />
+      </div>
+    </div>
+  </div>
 </template>

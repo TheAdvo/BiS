@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "advoai-trading-engine",
   "private": true,
   "type": "module",
   "scripts": {

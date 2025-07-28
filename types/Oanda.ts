@@ -50,6 +50,8 @@ export interface OandaAccount {
   trades?: Array<any>;
   /** Array of pending orders */
   orders?: Array<any>;
+  /** ID of the last transaction */
+  lastTransactionID: string; // or number, depending on API
 }
 
 /**

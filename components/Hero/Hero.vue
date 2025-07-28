@@ -58,18 +58,27 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
-defineProps({
-  stats: {
-    type: Array,
-    required: true
-  },
-  features: {
-    type: Array,
-    required: true
-  }
-})
+// Define prop types
+interface Stat {
+  value: string
+  label: string
+  icon: string
+}
+
+interface Feature {
+  title: string
+  description: string
+  icon: string
+}
+
+interface Props {
+  stats: Stat[]
+  features: Feature[]
+}
+
+defineProps<Props>()
 </script>

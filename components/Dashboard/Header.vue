@@ -89,7 +89,8 @@ const marketBadgeColor = computed(() => {
 
 // Actions
 const toggleNotifications = () => {
-  console.log('Notifications', 'You have 3 unread trading alerts')
+  const logger = useLogger()
+  logger.info('Notifications', 'You have 3 unread trading alerts')
   unreadNotifications.value = Math.max(0, unreadNotifications.value - 1)
 }
 

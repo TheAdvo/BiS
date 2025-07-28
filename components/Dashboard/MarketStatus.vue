@@ -185,6 +185,18 @@ const marketStatuses = computed(() => {
 
   return [
     {
+      name: 'Forex',
+      isOpen: isForexOpen(now),
+      hours: 'Sun 5:00 PM - Fri 5:00 PM ET',
+      timezone: 'Global'
+    },
+    {
+      name: 'Crypto',
+      isOpen: true,
+      hours: '24/7',
+      timezone: 'Global'
+    },
+    {
       name: 'NYSE',
       isOpen: isMarketOpenForTime(nyTime, 9.5, 16), // 9:30 AM - 4:00 PM
       hours: '9:30 AM - 4:00 PM ET',
@@ -207,18 +219,6 @@ const marketStatuses = computed(() => {
       isOpen: isMarketOpenForTime(sydneyTime, 10, 16), // 10:00 AM - 4:00 PM
       hours: '10:00 AM - 4:00 PM AEST',
       timezone: 'AEST'
-    },
-    {
-      name: 'Forex',
-      isOpen: isForexOpen(now),
-      hours: 'Sun 5:00 PM - Fri 5:00 PM ET',
-      timezone: 'Global'
-    },
-    {
-      name: 'Crypto',
-      isOpen: true,
-      hours: '24/7',
-      timezone: 'Global'
     }
   ]
 })

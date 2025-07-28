@@ -4,7 +4,24 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+// Use the default layout (with NavBar)
+definePageMeta({
+  layout: 'default'
+})
+
+// SEO Meta Tags
+useHead({
+  title: 'ADVOAI Trading Engine - Advanced AI-Powered Forex Trading',
+  meta: [
+    { name: 'description', content: 'Advanced AI trading platform with 99.8% accuracy, real-time analytics, and automated risk management for forex trading.' },
+    { name: 'keywords', content: 'AI trading, forex, automated trading, trading bot, financial technology' },
+    { property: 'og:title', content: 'ADVOAI Trading Engine' },
+    { property: 'og:description', content: 'Advanced AI trading platform with 99.8% accuracy and real-time analytics.' },
+    { property: 'og:type', content: 'website' }
+  ]
+})
+
 const stats = [
   { value: '99.8%', label: 'Trading Accuracy', icon: 'lucide:target' },
   { value: '$14.2M', label: 'Monthly Volume', icon: 'lucide:trending-up' },

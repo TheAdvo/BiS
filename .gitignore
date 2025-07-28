@@ -18,6 +18,14 @@ logs
 .fleet
 .idea
 
+# Deleted/unwanted API endpoints
+server/api/analytics/
+server/api/dashboard/
+server/api/market/
+composables/useAnalytics.ts
+composables/useDashboardStats.ts
+composables/useNotifications.ts
+
 # Local env files
 .env
 .env.*

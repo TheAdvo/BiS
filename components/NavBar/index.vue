@@ -1,11 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
-// Reactive state for the menu toggle
-const isOpen = ref(false)
+// Define types
+interface NavItem {
+  title: string
+  path: string
+  icon: string
+}
 
-// Example menu items (you can replace or import from a data source)
-const items = ref([
+// Reactive state for the menu toggle
+const isOpen = ref<boolean>(false)
+
+// Navigation menu items
+const items = ref<NavItem[]>([
   {
     title: "Home",
     path: "/",
@@ -19,27 +26,27 @@ const items = ref([
   {
     title: "Dashboard",
     path: "/dashboard",
-    icon: "lucide:align-left",
+    icon: "lucide:layout-dashboard",
   },
   {
     title: "Pricing",
-    path: "/",
+    path: "#pricing",
     icon: "iconoir:money-square",
   },
   {
     title: "How it Works",
-    path: "/",
+    path: "#how-it-works",
     icon: "lucide:workflow",
   },
   {
     title: "Support",
-    path: "/",
+    path: "#support",
     icon: "ri:contacts-line",
   },
   {
     title: "Blog",
-    path: "/",
-    icon: "lucide:id-card",
+    path: "#blog",
+    icon: "lucide:newspaper",
   },
 ]);
 

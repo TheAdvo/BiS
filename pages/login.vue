@@ -1,4 +1,17 @@
 <script lang="ts">
+// Use the default layout (with NavBar)
+definePageMeta({
+  layout: 'default'
+})
+
+// SEO Meta Tags
+useHead({
+  title: 'Login - ADVOAI Trading Engine',
+  meta: [
+    { name: 'description', content: 'Sign in to your ADVOAI trading account to access advanced AI-powered trading tools and analytics.' },
+    { name: 'robots', content: 'noindex, nofollow' } // Login page
+  ]
+})
 </script>
 
 
