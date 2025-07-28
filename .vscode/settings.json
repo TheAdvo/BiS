@@ -1,20 +1,11 @@
 {
-  "files.watcherExclude": {
-    "**/server/api/analytics/**": true,
-    "**/server/api/dashboard/**": true,
-    "**/server/api/market/**": true,
-    "**/composables/useAnalytics.ts": true,
-    "**/composables/useDashboardStats.ts": true,
-    "**/composables/useNotifications.ts": true
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
   },
-  "search.exclude": {
-    "**/server/api/analytics/**": true,
-    "**/server/api/dashboard/**": true,
-    "**/server/api/market/**": true
-  },
-  "files.exclude": {
-    "**/server/api/analytics/**": true,
-    "**/server/api/dashboard/**": true,
-    "**/server/api/market/**": true
-  }
+  "vue.codeActions.enabled": true,
+  "vue.complete.casing.tags": "kebab",
+  "vue.complete.casing.props": "camel"
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LayoutDashboard, Wallet, Briefcase, TrendingUp, BarChart3, Settings, Home } from "lucide-vue-next"
+import { LayoutDashboard, Briefcase, TrendingUp, BarChart3, Settings, Home } from "lucide-vue-next"
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar"
 import DashboardHeader from '@/components/Dashboard/Header.vue'
 
-// Menu items - centralized in the layout
+// Menu items - focused on trading bot functionality
 const items = [
   {
     title: "Home",
@@ -22,14 +22,9 @@ const items = [
     icon: Home,
   },
   {
-    title: "Overview",
+    title: "Bot Engine",
     url: "/dashboard",
     icon: LayoutDashboard,
-  },
-  {
-    title: "Account",
-    url: "#",
-    icon: Wallet,
   },
   {
     title: "Positions",
@@ -60,14 +55,14 @@ const items = [
       <SidebarHeader>
         <div class="flex items-center gap-2 py-2">
           <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <span class="text-primary-foreground font-bold text-sm">AD</span>
+            <span class="text-primary-foreground font-bold text-sm">TB</span>
           </div>
-          <span class="text-lg font-bold truncate group-data-[collapsible=icon]:hidden">ADVOAI Engine</span>
+          <span class="text-lg font-bold truncate group-data-[collapsible=icon]:hidden">Trading Bot Engine</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Trading Platform</SidebarGroupLabel>
+          <SidebarGroupLabel>Trading Bot Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem v-for="item in items" :key="item.title">

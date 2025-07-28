@@ -1,10 +1,10 @@
 <template>
   <header class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
     <div class="flex h-14 items-center px-6">
-      <!-- Left side - Sidebar trigger and App title -->
+      <!-- Left side - Sidebar trigger and Bot Engine title -->
       <div class="flex items-center gap-4">
         <SidebarTrigger />
-        <h1 class="text-xl font-semibold">ADVOAI Engine</h1>
+        <h1 class="text-xl font-semibold">Trading Bot Engine</h1>
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 rounded-full" :class="accountTypeIndicatorColor"></div>
           <span class="text-sm text-muted-foreground">{{ accountTypeIndicator }}</span>
@@ -13,6 +13,15 @@
 
       <!-- Right side - User info and actions -->
       <div class="ml-auto flex items-center gap-4">
+        <!-- Bot status indicator -->
+        <div class="flex items-center gap-2 text-sm">
+          <span class="text-muted-foreground">Bots:</span>
+          <Badge variant="outline" class="text-xs">
+            <div class="w-1.5 h-1.5 rounded-full mr-1 bg-green-500"></div>
+            Active
+          </Badge>
+        </div>
+
         <!-- Market status indicator -->
         <div class="flex items-center gap-2 text-sm">
           <span class="text-muted-foreground">Markets:</span>

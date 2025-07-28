@@ -9,7 +9,8 @@ export default defineEventHandler(async (event) => {
       : ['EUR_USD']
 
     const data = await oandaClient.getPricing(instruments as string[]) as any
-    return data.prices
+    // Return the prices array directly, or wrap in a response object
+    return { prices: data.prices || data }
   } catch (error: any) {
     throw error
   }

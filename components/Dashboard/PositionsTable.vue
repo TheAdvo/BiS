@@ -7,12 +7,15 @@
             <Briefcase class="w-4 h-4" />
             <span>Open Positions</span>
             <Badge variant="outline" class="text-xs">
-              <div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></div>
-              Live
+              <div class="w-1.5 h-1.5 rounded-full mr-1" :class="pricingPending ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'"></div>
+              {{ pricingPending ? 'Updating' : 'Live' }}
             </Badge>
           </CardTitle>
           <div class="text-xs text-muted-foreground">
-            {{ isLoading ? 'Loading...' : `${activePositionsCount} active ${activePositionsCount === 1 ? 'position' : 'positions'}` }}
+            <div>{{ isLoading ? 'Loading...' : `${activePositionsCount} active ${activePositionsCount === 1 ? 'position' : 'positions'}` }}</div>
+            <div v-if="lastPriceUpdate" class="mt-1">
+              Last update: {{ lastPriceUpdate.toLocaleTimeString() }}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -101,14 +104,86 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Briefcase, Settings } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import type { OandaTrade } from '@/types/Oanda'
 
 // Get real OANDA data
 const { data: positionsData, pending: positionsPending, error: positionsError } = useOandaPositions()
 const { data: tradesData, pending: tradesPending, error: tradesError } = useOandaTrades()
 
-// Helper function to get flag emoji for currency pairs
+// Create a reactive pricing data store
+const pricingData = ref<any>(null)
+const pricingPending = ref(false)
+const currentInstruments = ref<string[]>([])
+const lastPriceUpdate = ref<Date | null>(null)
+
+// Function to fetch pricing data
+const fetchPricingData = async (instruments: string[]) => {
+  if (instruments.length === 0) return
+
+  try {
+    pricingPending.value = true
+    console.log('Fetching pricing for instruments:', instruments)
+    const response = await $fetch(`/api/oanda/pricing?instruments=${instruments.join(',')}`)
+    console.log('Pricing response received:', response)
+    pricingData.value = response
+    lastPriceUpdate.value = new Date()
+  } catch (error) {
+    console.error('Error fetching pricing:', error)
+  } finally {
+    pricingPending.value = false
+  }
+}
+
+// Set up automatic pricing updates every 5 seconds
+let pricingInterval: NodeJS.Timeout | null = null
+
+const startPricingUpdates = () => {
+  if (pricingInterval) {
+    clearInterval(pricingInterval)
+  }
+
+  // Update every 5 seconds to match OANDA cache TTL
+  pricingInterval = setInterval(() => {
+    if (currentInstruments.value.length > 0) {
+      console.log('Auto-updating pricing data...')
+      fetchPricingData(currentInstruments.value)
+    }
+  }, 5000)
+}
+
+const stopPricingUpdates = () => {
+  if (pricingInterval) {
+    clearInterval(pricingInterval)
+    pricingInterval = null
+  }
+}
+
+// Watch for changes in trades data and fetch pricing
+watch(tradesData, (newTradesData) => {
+  if (newTradesData?.trades) {
+    const instruments = [...new Set(newTradesData.trades.map((trade: any) => trade.instrument))]
+    console.log('Trades data changed, instruments:', instruments)
+    currentInstruments.value = instruments
+    fetchPricingData(instruments)
+
+    // Start auto-updates if we have instruments
+    if (instruments.length > 0) {
+      startPricingUpdates()
+    } else {
+      stopPricingUpdates()
+    }
+  } else {
+    // No trades, stop updates
+    currentInstruments.value = []
+    stopPricingUpdates()
+  }
+}, { immediate: true })
+
+// Cleanup on component unmount
+onUnmounted(() => {
+  stopPricingUpdates()
+})// Helper function to get flag emoji for currency pairs
 const getCurrencyFlag = (instrument: string): string => {
   const flags: Record<string, string> = {
     'EUR_USD': '🇪🇺🇺🇸',
@@ -162,24 +237,59 @@ const formatUnits = (units: string): string => {
   return num.toLocaleString()
 }
 
+// Helper function to get current price from pricing data
+const getCurrentPrice = (instrument: string, side: 'LONG' | 'SHORT'): string => {
+  console.log('getCurrentPrice called:', { instrument, side, pricingData: pricingData.value })
+
+  if (!pricingData.value?.prices) {
+    console.log('No pricing data available')
+    return 'Loading...'
+  }
+
+  const priceData = pricingData.value.prices.find((p: any) => p.instrument === instrument)
+  console.log('Found price data for', instrument, ':', priceData)
+
+  if (!priceData) {
+    console.log('No price data found for instrument:', instrument)
+    return 'N/A'
+  }
+
+  // For LONG positions, we use the bid price (what we can sell at)
+  // For SHORT positions, we use the ask price (what we need to buy at to close)
+  const price = side === 'LONG'
+    ? priceData.bids?.[0]?.price
+    : priceData.asks?.[0]?.price
+
+  console.log('Selected price:', price, 'for side:', side)
+  return price ? parseFloat(price).toFixed(5) : 'N/A'
+}
+
 // Transform trades data for display
 const displayTrades = computed(() => {
+  console.log('Computing displayTrades, tradesData:', tradesData.value)
   if (!tradesData.value?.trades) return []
 
-  return tradesData.value.trades.map((trade: OandaTrade) => ({
-    id: trade.id,
-    instrument: formatInstrument(trade.instrument),
-    description: getInstrumentDescription(trade.instrument),
-    flag: getCurrencyFlag(trade.instrument),
-    side: getTradeSide(trade.currentUnits),
-    size: formatUnits(trade.currentUnits),
-    entryPrice: parseFloat(trade.price).toFixed(5),
-    currentPrice: parseFloat(trade.price).toFixed(5), // We'd need current pricing for this
-    pnl: parseFloat(trade.unrealizedPL),
-    marginUsed: parseFloat(trade.marginUsed).toFixed(2),
-    openTime: new Date(trade.openTime).toLocaleString(),
-    rawTrade: trade
-  }))
+  return tradesData.value.trades.map((trade: OandaTrade) => {
+    const side = getTradeSide(trade.currentUnits)
+    const currentPrice = getCurrentPrice(trade.instrument, side)
+
+    console.log('Processing trade:', trade.id, 'instrument:', trade.instrument, 'side:', side, 'currentPrice:', currentPrice)
+
+    return {
+      id: trade.id,
+      instrument: formatInstrument(trade.instrument),
+      description: getInstrumentDescription(trade.instrument),
+      flag: getCurrencyFlag(trade.instrument),
+      side,
+      size: formatUnits(trade.currentUnits),
+      entryPrice: parseFloat(trade.price).toFixed(5),
+      currentPrice: currentPrice,
+      pnl: parseFloat(trade.unrealizedPL),
+      marginUsed: parseFloat(trade.marginUsed).toFixed(2),
+      openTime: new Date(trade.openTime).toLocaleString(),
+      rawTrade: trade
+    }
+  })
 })
 
 // Computed for active positions count
@@ -189,7 +299,7 @@ const activePositionsCount = computed(() => {
 
 // Check if data is loading
 const isLoading = computed(() => {
-  return positionsPending.value || tradesPending.value
+  return positionsPending.value || tradesPending.value || pricingPending.value
 })
 
 // Check if there's an error

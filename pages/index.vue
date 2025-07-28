@@ -12,43 +12,43 @@ definePageMeta({
 
 // SEO Meta Tags
 useHead({
-  title: 'ADVOAI Trading Engine - Advanced AI-Powered Forex Trading',
+  title: 'Trading Bot Engine - Custom Strategy Development Platform',
   meta: [
-    { name: 'description', content: 'Advanced AI trading platform with 99.8% accuracy, real-time analytics, and automated risk management for forex trading.' },
-    { name: 'keywords', content: 'AI trading, forex, automated trading, trading bot, financial technology' },
-    { property: 'og:title', content: 'ADVOAI Trading Engine' },
-    { property: 'og:description', content: 'Advanced AI trading platform with 99.8% accuracy and real-time analytics.' },
+    { name: 'description', content: 'Advanced trading bot engine with custom JavaScript strategy development, real-time execution, and comprehensive performance monitoring.' },
+    { name: 'keywords', content: 'trading bot, strategy development, automated trading, forex trading, custom scripts' },
+    { property: 'og:title', content: 'Trading Bot Engine' },
+    { property: 'og:description', content: 'Custom strategy development platform for automated trading.' },
     { property: 'og:type', content: 'website' }
   ]
 })
 
 const stats = [
-  { value: '99.8%', label: 'Trading Accuracy', icon: 'lucide:target' },
-  { value: '$14.2M', label: 'Monthly Volume', icon: 'lucide:trending-up' },
-  { value: '0.42s', label: 'Execution Speed', icon: 'lucide:zap' },
-  { value: '24/7', label: 'Market Coverage', icon: 'lucide:globe' },
+  { value: '24/7', label: 'Bot Operation', icon: 'lucide:activity' },
+  { value: 'Real-time', label: 'Strategy Execution', icon: 'lucide:zap' },
+  { value: 'Custom', label: 'JavaScript Strategies', icon: 'lucide:code' },
+  { value: 'Live', label: 'Performance Monitoring', icon: 'lucide:trending-up' },
 ]
 
 const features = [
   {
-    title: 'Advanced AI Trading',
-    description: 'Deep learning algorithms that adapt to market conditions in real-time',
-    icon: 'lucide:cpu'
+    title: 'Custom Strategy Development',
+    description: 'Write and deploy custom JavaScript trading strategies with real-time execution',
+    icon: 'lucide:code'
   },
   {
-    title: 'Risk Management',
-    description: 'Smart position sizing and stop-loss optimization',
-    icon: 'lucide:shield'
+    title: 'Bot Management',
+    description: 'Create, configure, and manage multiple trading bots with different strategies',
+    icon: 'lucide:bot'
   },
   {
-    title: 'Multi-Currency Support',
-    description: 'Trade major, minor, and exotic currency pairs',
-    icon: 'lucide:currency'
+    title: 'Performance Monitoring',
+    description: 'Comprehensive real-time performance tracking and analytics',
+    icon: 'lucide:activity'
   },
   {
-    title: 'Real-time Analytics',
-    description: 'Comprehensive dashboards and performance metrics',
-    icon: 'lucide:bar-chart'
+    title: 'Market Analysis',
+    description: 'Advanced technical indicators and market sentiment analysis',
+    icon: 'lucide:trending-up'
   }
 ]
 </script>
