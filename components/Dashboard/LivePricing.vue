@@ -13,7 +13,7 @@
                     'bg-destructive text-destructive-foreground'
               ]">
                 <span class="w-2 h-2 rounded-full" :class="[
-                  sseStatus === 'connected' ? 'bg-chart-1 animate-pulse' :
+                  sseStatus === 'connected' ? 'bg-chart-1' :
                     sseStatus === 'connecting' ? 'bg-chart-2/70 animate-spin' :
                       'bg-destructive/80'
                 ]"></span>

@@ -3,7 +3,7 @@
     <Card class="h-full">
       <CardHeader class="pb-3 border-b">
         <CardTitle class="text-sm font-semibold flex items-center gap-2">
-          <div class="w-2 h-2 rounded-full animate-pulse" :class="statusIndicator.color"></div>
+          <div class="w-2 h-2 rounded-full" :class="statusIndicator.color"></div>
           <span class="text-base font-bold">Markets</span>
         </CardTitle>
       </CardHeader>
@@ -74,7 +74,7 @@
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium">Market Activity:</span>
               <Badge :variant="volumeIndicator.variant" class="flex items-center gap-1">
-                <div class="w-2 h-2 rounded-full animate-pulse" :class="volumeIndicator.color"></div>
+                <div class="w-2 h-2 rounded-full" :class="volumeIndicator.color"></div>
                 {{ volumeIndicator.text }}
               </Badge>
             </div>

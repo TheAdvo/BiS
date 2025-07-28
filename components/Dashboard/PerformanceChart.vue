@@ -42,7 +42,7 @@
         <!-- Loading State -->
         <div v-else-if="loading" class="w-full h-full flex items-center justify-center">
           <div class="text-center">
-            <BarChart3 class="w-8 h-8 mx-auto text-muted-foreground mb-2 animate-pulse" />
+            <BarChart3 class="w-8 h-8 mx-auto text-muted-foreground mb-2" />
             <p class="text-sm text-muted-foreground">Loading chart data...</p>
           </div>
         </div>

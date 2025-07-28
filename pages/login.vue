@@ -1,4 +1,4 @@
-<script lang="ts">
+<script setup lang="ts">
 // Use the default layout (with NavBar)
 definePageMeta({
   layout: 'default'

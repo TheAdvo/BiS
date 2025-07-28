@@ -14,7 +14,7 @@
               <div>
                 <CardTitle class="text-sm font-medium text-muted-foreground">Account Balance</CardTitle>
                 <CardDescription>
-                  <div v-if="pending" class="animate-pulse">
+                  <div v-if="pending" class="">
                     <div class="h-8 bg-card rounded w-24 mb-2"></div>
                   </div>
                   <span v-else class="text-2xl font-bold">{{ formatCurrency(accountBalance) }}</span>
@@ -26,7 +26,7 @@
             </CardHeader>
             <CardContent class="pt-0">
               <div class="flex items-center text-sm">
-                <div v-if="pending" class="animate-pulse">
+                <div v-if="pending" class="">
                   <div class="h-4 bg-card rounded w-20"></div>
                 </div>
                 <template v-else>
@@ -53,7 +53,7 @@
               <div>
                 <CardTitle class="text-sm font-medium text-muted-foreground">Total P&L</CardTitle>
                 <CardDescription>
-                  <div v-if="pending" class="animate-pulse">
+                  <div v-if="pending" class="">
                     <div class="h-8 bg-card rounded w-24 mb-2"></div>
                   </div>
                   <span v-else class="text-2xl font-bold" :class="totalPnL >= 0 ? 'text-primary' : 'text-destructive'">
@@ -67,7 +67,7 @@
             </CardHeader>
             <CardContent class="pt-0">
               <div class="flex items-center text-sm">
-                <div v-if="pending" class="animate-pulse">
+                <div v-if="pending" class="">
                   <div class="h-4 bg-card rounded w-16"></div>
                 </div>
                 <template v-else>
@@ -94,7 +94,7 @@
               <div>
                 <CardTitle class="text-sm font-medium text-muted-foreground">Open Positions</CardTitle>
                 <CardDescription>
-                  <div v-if="pending" class="animate-pulse">
+                  <div v-if="pending" class="">
                     <div class="h-8 bg-card rounded w-12 mb-2"></div>
                   </div>
                   <span v-else class="text-2xl font-bold">{{ openPositions }}</span>
@@ -106,7 +106,7 @@
             </CardHeader>
             <CardContent class="pt-0">
               <div class="flex items-center text-sm">
-                <div v-if="pending" class="animate-pulse">
+                <div v-if="pending" class="">
                   <div class="h-4 bg-card rounded w-20"></div>
                 </div>
                 <template v-else>
@@ -136,7 +136,7 @@
               <div>
                 <CardTitle class="text-sm font-medium text-muted-foreground">Trades Today</CardTitle>
                 <CardDescription>
-                  <div v-if="pending" class="animate-pulse">
+                  <div v-if="pending" class="">
                     <div class="h-8 bg-card rounded w-12 mb-2"></div>
                   </div>
                   <span v-else class="text-2xl font-bold">{{ dailyTrades }}</span>
@@ -148,7 +148,7 @@
             </CardHeader>
             <CardContent class="pt-0">
               <div class="flex items-center text-sm">
-                <div v-if="pending" class="animate-pulse">
+                <div v-if="pending" class="">
                   <div class="h-4 bg-card rounded w-16"></div>
                 </div>
                 <template v-else>
@@ -227,11 +227,11 @@ const lastUpdated = computed(() => {
   return now.toLocaleTimeString()
 })
 
-// Auto-refresh every 30 seconds
+// Auto-refresh every 60 seconds (reduced from 30 seconds for better performance)
 onMounted(() => {
   const interval = setInterval(() => {
     refresh()
-  }, 30000)
+  }, 60000)
 
   // Cleanup on unmount
   onUnmounted(() => {

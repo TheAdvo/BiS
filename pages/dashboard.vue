@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import DashboardAccountData from '@/components/Dashboard/AccountData.vue'
-import DashboardLivePricing from '@/components/Dashboard/LivePricingSimple.vue'
-import DashboardMarketStatus from '@/components/Dashboard/MarketStatus.vue'
-import DashboardTradingView from '@/components/Dashboard/TradingView.vue'
-import DashboardQuickStats from '@/components/Dashboard/QuickStats.vue'
-
 // Use the dashboard layout
 definePageMeta({
   layout: 'dashboard'
 })
+
+import { onMounted } from 'vue'
+
+// Lazy load dashboard components for better performance and bundle splitting
+const DashboardAccountData = defineAsyncComponent(() => import('@/components/Dashboard/AccountData.vue'))
+const DashboardLivePricing = defineAsyncComponent(() => import('@/components/Dashboard/LivePricingSimple.vue'))
+const DashboardMarketStatus = defineAsyncComponent(() => import('@/components/Dashboard/MarketStatus.vue'))
+const DashboardTradingView = defineAsyncComponent(() => import('@/components/Dashboard/TradingView.vue'))
+const DashboardQuickStats = defineAsyncComponent(() => import('@/components/Dashboard/QuickStats.vue'))
 
 // SEO Meta Tags
 useHead({

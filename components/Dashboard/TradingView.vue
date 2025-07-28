@@ -4,7 +4,7 @@
       <div class="flex items-end justify-between">
         <div class="flex items-end gap-3">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
             <span class="text-xl font-bold">{{ selectedSymbol || 'EUR/USD' }}</span>
           </CardTitle>
 

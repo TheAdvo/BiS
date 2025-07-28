@@ -7,7 +7,7 @@
             <Briefcase class="w-4 h-4" />
             <span>Open Positions</span>
             <Badge variant="outline" class="text-xs">
-              <div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+              <div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></div>
               Live
             </Badge>
           </CardTitle>

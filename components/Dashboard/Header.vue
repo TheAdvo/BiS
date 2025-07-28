@@ -6,7 +6,7 @@
         <SidebarTrigger />
         <h1 class="text-xl font-semibold">ADVOAI Engine</h1>
         <div class="flex items-center gap-2">
-          <div class="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+          <div class="w-2 h-2 bg-green-600 rounded-full"></div>
           <span class="text-sm text-muted-foreground">Live</span>
         </div>
       </div>
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -95,9 +95,17 @@ const toggleNotifications = () => {
 }
 
 // Lifecycle
+let marketStatusInterval: NodeJS.Timeout | null = null
+
 onMounted(() => {
   updateMarketStatus()
   // Update market status every minute
-  setInterval(updateMarketStatus, 60000)
+  marketStatusInterval = setInterval(updateMarketStatus, 60000)
+})
+
+onUnmounted(() => {
+  if (marketStatusInterval) {
+    clearInterval(marketStatusInterval)
+  }
 })
 </script>

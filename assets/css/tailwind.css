@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -41,7 +41,8 @@
   --sidebar-ring: oklch(0.7731 0 0);
   --font-sans: Roboto, sans-serif;
   --font-serif: Roboto, sans-serif;
-  --font-mono: Roboto Mono, monospace;
+  --font-mono: ui-monospace, "SF Mono", "Monaco", "Cascadia Code", "Consolas",
+    "Courier New", monospace;
   --radius: 0.5rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -92,7 +93,8 @@
   --sidebar-ring: oklch(0.7731 0 0);
   --font-sans: Roboto, sans-serif;
   --font-serif: Roboto, sans-serif;
-  --font-mono: Roboto Mono, monospace;
+  --font-mono: ui-monospace, "SF Mono", "Monaco", "Cascadia Code", "Consolas",
+    "Courier New", monospace;
   --radius: 0.5rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);

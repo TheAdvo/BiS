@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { RefreshCw } from "lucide-vue-next"
-import { Button } from "@/components/ui/button"
-import DashboardPerformanceChart from '@/components/Dashboard/PerformanceChart.vue'
-import DashboardStrategyMetrics from '@/components/Dashboard/StrategyMetrics.vue'
-import type { AnalyticsData, StrategyPerformance, CurrencyPairPerformance } from '@/types/Analytics'
-
 // Use the dashboard layout
 definePageMeta({
   layout: 'dashboard'
 })
+
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { RefreshCw } from "lucide-vue-next"
+import { Button } from "@/components/ui/button"
+// Lazy load dashboard components for better performance
+const DashboardPerformanceChart = defineAsyncComponent(() => import('@/components/Dashboard/PerformanceChart.vue'))
+const DashboardStrategyMetrics = defineAsyncComponent(() => import('@/components/Dashboard/StrategyMetrics.vue'))
+import type { AnalyticsData, StrategyPerformance, CurrencyPairPerformance } from '@/types/Analytics'
 
 // SEO Meta Tags
 useHead({
@@ -125,9 +126,9 @@ const refreshData = async () => {
   }
 }
 
-// Auto-refresh every 5 minutes
+// Auto-refresh every 15 minutes (reduced from 5 minutes for better performance)
 onMounted(() => {
-  const interval = setInterval(refreshData, 5 * 60 * 1000)
+  const interval = setInterval(refreshData, 15 * 60 * 1000)
 
   // Cleanup on unmount
   onUnmounted(() => {

@@ -2,23 +2,21 @@
 import type { OandaInstrument } from '@/types/Oanda'
 
 export const useOandaInstruments = () => {
-  const instruments = ref<OandaInstrument[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  // Use useAsyncData for proper caching (instruments rarely change)
+  const { data: instrumentsData, pending: loading, error, refresh } = useAsyncData<{ instruments: OandaInstrument[], count: number }>('oanda-instruments', async () => {
+    const response = await $fetch<{ instruments: OandaInstrument[], count: number }>('/api/oanda/instruments')
+    return response
+  }, {
+    // Cache for 1 hour since instruments rarely change
+    server: true,
+    default: () => ({ instruments: [], count: 0 })
+  })
+
+  // Computed for instruments array
+  const instruments = computed(() => instrumentsData.value?.instruments || [])
 
   const fetchInstruments = async () => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const response = await $fetch<{ instruments: OandaInstrument[], count: number }>('/api/oanda/instruments')
-      instruments.value = response.instruments
-    } catch (err) {
-      console.error('Error fetching instruments:', err)
-      error.value = 'Failed to load currency pairs'
-    } finally {
-      loading.value = false
-    }
+    await refresh()
   }
 
   // Get instruments formatted for the pricing stream
@@ -53,6 +51,7 @@ export const useOandaInstruments = () => {
     instruments: readonly(instruments),
     loading: readonly(loading),
     error: readonly(error),
+    refresh,
     fetchInstruments,
     getInstrumentNames,
     getPopularInstruments,

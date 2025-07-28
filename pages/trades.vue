@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import DashboardTradesTable from '@/components/Dashboard/TradesTable.vue'
-
 // Use the dashboard layout
 definePageMeta({
   layout: 'dashboard'
 })
+
+import { onMounted } from 'vue'
+// Lazy load dashboard components for better performance
+const DashboardTradesTable = defineAsyncComponent(() => import('@/components/Dashboard/TradesTable.vue'))
 
 // SEO Meta Tags
 useHead({

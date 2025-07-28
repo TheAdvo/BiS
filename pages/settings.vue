@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { TrendingUp, Settings, BarChart3, Wallet } from "lucide-vue-next"
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-
 // Use the dashboard layout
 definePageMeta({
   layout: 'dashboard'
 })
+
+import { TrendingUp, Settings, BarChart3, Wallet } from "lucide-vue-next"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 // SEO Meta Tags
 useHead({
@@ -93,7 +93,7 @@ useHead({
               <label class="text-sm font-medium">Connection Status</label>
               <div class="flex items-center gap-2">
                 <Badge variant="default" class="flex items-center gap-1">
-                  <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                   Connected
                 </Badge>
               </div>
