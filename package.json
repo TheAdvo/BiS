@@ -21,7 +21,7 @@
     "@oanda/v20": "^3.0.25-0",
     "@tailwindcss/vite": "^4.1.11",
     "@unhead/vue": "^2.0.12",
-    "@vueuse/core": "^13.5.0",
+    "@vueuse/core": "^13.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.1",

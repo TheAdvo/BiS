@@ -11,7 +11,8 @@
 // Global error handling
 useHead({
   htmlAttrs: {
-    lang: 'en'
+    lang: 'en',
+    class: 'dark'
   }
 })
 </script>

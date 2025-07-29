@@ -11,8 +11,13 @@ import BotManagementPanel from '@/components/TradingBot/BotManagementPanel.vue'
 import StrategyScriptEditor from '@/components/TradingBot/StrategyScriptEditor.vue'
 import BotPerformanceMonitor from '@/components/TradingBot/BotPerformanceMonitor.vue'
 import ActiveStrategiesPanel from '@/components/TradingBot/ActiveStrategiesPanel.vue'
-import MarketAnalysisPanel from '@/components/TradingBot/MarketAnalysisPanel.vue'
+import SimplifiedMarketAnalysis from '@/components/TradingBot/SimplifiedMarketAnalysis.vue'
 import BotQuickStats from '@/components/TradingBot/BotQuickStats.vue'
+import { useOandaStore } from '~/stores/oanda'
+
+// Initialize centralized OANDA data management
+const { refreshAll } = useOandaStore()
+const { start: startAutoRefresh } = useOandaAutoRefresh()
 
 // SEO Meta Tags
 useHead({
@@ -23,9 +28,15 @@ useHead({
   ]
 })
 
-onMounted(() => {
+onMounted(async () => {
   const logger = useLogger()
   logger.info('Trading Bot Engine loaded', 'Welcome to ADVOAI Bot Dashboard')
+
+  // Initial data load
+  await refreshAll()
+
+  // Start centralized auto-refresh for all components
+  startAutoRefresh()
 })
 </script>
 
@@ -43,7 +54,7 @@ onMounted(() => {
 
       <!-- Center - Market Analysis & Performance (4 columns) -->
       <div class="xl:col-span-4 space-y-6">
-        <MarketAnalysisPanel />
+        <SimplifiedMarketAnalysis />
         <BotPerformanceMonitor />
       </div>
 

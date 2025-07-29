@@ -5,11 +5,25 @@ definePageMeta({
 })
 
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { RefreshCw } from "lucide-vue-next"
+import { RefreshCw, TrendingUp, TrendingDown, ArrowUp, ArrowDown } from "lucide-vue-next"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 // Lazy load dashboard components for better performance
 const DashboardPerformanceChart = defineAsyncComponent(() => import('@/components/Dashboard/PerformanceChart.vue'))
 const DashboardStrategyMetrics = defineAsyncComponent(() => import('@/components/Dashboard/StrategyMetrics.vue'))
+
+// Import advanced trading composables
+import { useMultiTimeframeAnalysis } from '@/composables/useMultiTimeframeAnalysis'
+import { useRiskManagement } from '@/composables/useRiskManagement'
+import { useTradingSignals } from '@/composables/useTradingSignals'
+import { useEconomicCalendar } from '@/composables/useEconomicCalendar'
+import { useVolumeAnalysis } from '@/composables/useVolumeAnalysis'
+import { useCorrelationMatrix } from '@/composables/useCorrelationMatrix'
+import { useOandaCandles } from '@/composables/useOandaCandles'
+
 import type { AnalyticsData, StrategyPerformance, CurrencyPairPerformance } from '@/types/Analytics'
 
 // SEO Meta Tags
@@ -23,6 +37,52 @@ useHead({
 
 // Get real OANDA account data instead of mock analytics
 const { data: oandaAccount, pending, error, refresh } = useOandaAccount()
+
+// Initialize advanced trading features
+const {
+  analysis: multiTimeframeAnalysis,
+  activeTimeframe,
+  timeframes,
+  fetchAllTimeframes,
+  startAutoRefresh: startMTFRefresh
+} = useMultiTimeframeAnalysis('EUR_USD')
+
+const {
+  riskSettings,
+  calculation,
+  riskAssessment
+} = useRiskManagement()
+
+const {
+  signals,
+  activeSignals,
+  generateSignals,
+  addSignal
+} = useTradingSignals()
+
+const {
+  upcomingEvents,
+  currentMarketImpact,
+  fetchCalendarData
+} = useEconomicCalendar()
+
+const {
+  volumeIndicators,
+  volumeStrength,
+  pointOfControl,
+  volumeAlerts,
+  calculateVolumeIndicators
+} = useVolumeAnalysis()
+
+const {
+  correlationMatrix,
+  currencyStrengths,
+  marketInsights,
+  marketSentiment,
+  fetchCorrelationData
+} = useCorrelationMatrix()
+
+const { data: candleData } = useOandaCandles('EUR_USD', 'M5', 500)
 
 // Create analytics data from real OANDA account data
 const analyticsData = computed((): AnalyticsData | null => {
@@ -121,19 +181,54 @@ const refreshData = async () => {
   isRefreshing.value = true
   try {
     await refresh()
+
+    // Refresh advanced trading features
+    await Promise.all([
+      fetchAllTimeframes(),
+      fetchCalendarData(),
+      fetchCorrelationData()
+    ])
+
+    // Generate new signals from current candle data
+    if (candleData.value?.candles) {
+      const newSignals = await generateSignals('EUR_USD', candleData.value.candles, activeTimeframe.value)
+      newSignals.forEach(signal => addSignal(signal))
+
+      // Update volume analysis
+      calculateVolumeIndicators(candleData.value.candles)
+    }
   } finally {
     isRefreshing.value = false
   }
 }
 
 // Auto-refresh every 15 minutes (reduced from 5 minutes for better performance)
-onMounted(() => {
-  const interval = setInterval(refreshData, 15 * 60 * 1000)
+let refreshInterval: NodeJS.Timeout
 
-  // Cleanup on unmount
-  onUnmounted(() => {
-    clearInterval(interval)
-  })
+onMounted(async () => {
+  // Initial load of advanced features
+  await Promise.all([
+    fetchAllTimeframes(),
+    fetchCalendarData(),
+    fetchCorrelationData()
+  ])
+
+  // Start auto-refresh for multi-timeframe analysis
+  startMTFRefresh()
+
+  // Initialize with current candle data
+  if (candleData.value?.candles) {
+    calculateVolumeIndicators(candleData.value.candles)
+  }
+
+  refreshInterval = setInterval(refreshData, 15 * 60 * 1000)
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
 })
 </script>
 
@@ -282,6 +377,261 @@ onMounted(() => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Advanced Trading Analysis Section -->
+        <div class="space-y-6 mt-8">
+          <div class="border-t pt-8">
+            <h2 class="text-2xl font-bold mb-6">Advanced Market Analysis</h2>
+
+            <!-- Multi-Timeframe Analysis -->
+            <div class="mb-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Multi-Timeframe Analysis</h3>
+                <div class="flex space-x-2">
+                  <Button v-for="tf in timeframes" :key="tf.key" @click="activeTimeframe = tf.key" :variant="activeTimeframe === tf.key ? 'default' : 'outline'" size="sm">
+                    {{ tf.label }}
+                  </Button>
+                </div>
+              </div>
+
+              <!-- Overall Market Bias -->
+              <Card v-if="multiTimeframeAnalysis && multiTimeframeAnalysis.overall.bias !== 'neutral'" class="mb-4">
+                <CardContent class="pt-6">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                      <TrendingUp v-if="multiTimeframeAnalysis.overall.bias === 'bullish'" class="h-5 w-5 text-green-500" />
+                      <TrendingDown v-else class="h-5 w-5 text-red-500" />
+                      <span class="font-medium">Overall Bias: {{ multiTimeframeAnalysis.overall.bias.toUpperCase() }}</span>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm text-muted-foreground">Confidence: {{ multiTimeframeAnalysis.overall.confidence.toFixed(1) }}%</p>
+                      <p class="text-sm text-muted-foreground">Confluence: {{ multiTimeframeAnalysis.overall.confluence.toFixed(1) }}%</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <!-- Trading Signals & Risk Management Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <!-- Active Trading Signals -->
+              <Card>
+                <CardHeader>
+                  <CardTitle class="flex items-center justify-between">
+                    <span>Active Trading Signals</span>
+                    <Badge :variant="activeSignals.length > 0 ? 'default' : 'secondary'">
+                      {{ activeSignals.length }} Active
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div v-if="activeSignals.length === 0" class="text-center py-4 text-muted-foreground">
+                    No active trading signals
+                  </div>
+                  <div v-else class="space-y-3 max-h-64 overflow-y-auto">
+                    <div v-for="signal in activeSignals.slice(0, 4)" :key="signal.id" :class="[
+                      'p-3 rounded-lg border-l-4',
+                      signal.type === 'buy' ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
+                    ]">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                          <ArrowUp v-if="signal.type === 'buy'" class="h-4 w-4 text-green-600" />
+                          <ArrowDown v-else class="h-4 w-4 text-red-600" />
+                          <span class="font-medium text-sm">{{ signal.type.toUpperCase() }}</span>
+                          <Badge :variant="signal.strength === 'strong' ? 'default' : 'secondary'" class="text-xs">
+                            {{ signal.strength }}
+                          </Badge>
+                        </div>
+                        <span class="text-sm font-medium">{{ signal.confidence }}%</span>
+                      </div>
+                      <p class="text-xs text-muted-foreground mt-1">{{ signal.reason }}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <!-- Risk Management Quick View -->
+              <Card>
+                <CardHeader>
+                  <CardTitle>Risk Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="text-xs font-medium text-muted-foreground">Risk %</label>
+                      <Input v-model.number="riskSettings.riskPercentage" type="number" placeholder="2" step="0.1" class="h-8" />
+                    </div>
+                    <div>
+                      <label class="text-xs font-medium text-muted-foreground">Entry Price</label>
+                      <Input v-model.number="riskSettings.entryPrice" type="number" placeholder="1.10000" step="0.00001" class="h-8" />
+                    </div>
+                  </div>
+
+                  <div class="mt-4 space-y-2">
+                    <div class="flex justify-between">
+                      <span class="text-sm text-muted-foreground">Position Size:</span>
+                      <span class="font-medium">{{ calculation.positionSize.toFixed(5) }} lots</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-sm text-muted-foreground">Risk/Reward:</span>
+                      <span class="font-medium" :class="calculation.riskRewardRatio >= 2 ? 'text-green-600' : 'text-red-600'">
+                        1:{{ calculation.riskRewardRatio.toFixed(1) }}
+                      </span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-sm text-muted-foreground">Max Risk:</span>
+                      <span class="font-medium text-red-600">${{ calculation.maxRisk.toFixed(2) }}</span>
+                    </div>
+                  </div>
+
+                  <div class="mt-3 p-2 rounded text-center text-sm font-medium" :class="[
+                    riskAssessment.color === 'green' ? 'bg-green-100 text-green-800' :
+                      riskAssessment.color === 'red' ? 'bg-red-100 text-red-800' :
+                        riskAssessment.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-muted text-muted-foreground'
+                  ]">
+                    {{ riskAssessment.assessment }}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <!-- Economic Calendar & Volume Analysis Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <!-- Economic Calendar -->
+              <Card>
+                <CardHeader>
+                  <CardTitle class="flex items-center justify-between">
+                    <span>Economic Calendar</span>
+                    <Badge :variant="currentMarketImpact.level === 'high' ? 'destructive' : 'default'">
+                      {{ currentMarketImpact.level.toUpperCase() }} Impact
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div v-if="upcomingEvents.length === 0" class="text-center py-4 text-muted-foreground">
+                    No upcoming high-impact events
+                  </div>
+                  <div v-else class="space-y-2 max-h-48 overflow-y-auto">
+                    <div v-for="event in upcomingEvents.slice(0, 4)" :key="event.id" class="flex items-center justify-between p-2 border rounded">
+                      <div class="flex items-center space-x-2">
+                        <Badge :variant="event.importance === 'high' ? 'destructive' : event.importance === 'medium' ? 'default' : 'secondary'" class="text-xs">
+                          {{ event.currency }}
+                        </Badge>
+                        <div>
+                          <p class="text-sm font-medium">{{ event.event }}</p>
+                          <p class="text-xs text-muted-foreground">{{ event.time }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <!-- Volume Analysis -->
+              <Card>
+                <CardHeader>
+                  <CardTitle>Volume Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <p class="text-xs text-muted-foreground">VWAP</p>
+                        <p class="font-medium">{{ volumeIndicators.vwap?.toFixed(5) || 'N/A' }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-muted-foreground">MFI</p>
+                        <p class="font-medium">{{ volumeIndicators.mfi?.toFixed(1) || 'N/A' }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-muted-foreground">Volume Ratio</p>
+                        <p class="font-medium">{{ volumeIndicators.volumeRatio?.toFixed(2) || 'N/A' }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-muted-foreground">P&V Confirm</p>
+                        <p class="font-medium capitalize">{{ volumeIndicators.priceVolumeConfirmation }}</p>
+                      </div>
+                    </div>
+
+                    <div class="p-2 rounded text-center text-sm font-medium" :class="[
+                      volumeStrength.strength === 'strong' ? 'bg-green-100 text-green-800' :
+                        volumeStrength.strength === 'weak' ? 'bg-red-100 text-red-800' :
+                          'bg-muted text-muted-foreground'
+                    ]">
+                      Volume Strength: {{ volumeStrength.strength.toUpperCase() }}
+                    </div>
+
+                    <div v-if="pointOfControl" class="p-2 bg-blue-50 rounded">
+                      <p class="text-xs text-muted-foreground">Point of Control</p>
+                      <p class="font-medium text-blue-600">{{ pointOfControl.priceLevel.toFixed(5) }}</p>
+                      <p class="text-xs text-muted-foreground">{{ pointOfControl.percentage.toFixed(1) }}% volume</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <!-- Correlation Matrix -->
+            <Card>
+              <CardHeader>
+                <CardTitle class="flex items-center justify-between">
+                  <span>Currency Correlation & Market Sentiment</span>
+                  <Badge :variant="marketSentiment.sentiment !== 'neutral' ? 'default' : 'secondary'">
+                    {{ marketSentiment.sentiment.replace('_', '-').toUpperCase() }}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <!-- Currency Strength Ranking -->
+                  <div>
+                    <h4 class="font-medium mb-3">Currency Strength Ranking</h4>
+                    <div class="space-y-2 max-h-32 overflow-y-auto">
+                      <div v-for="currency in currencyStrengths.slice(0, 8)" :key="currency.currency" class="flex items-center justify-between p-2 rounded" :class="currency.rank <= 2 ? 'bg-green-50' : currency.rank >= 7 ? 'bg-red-50' : 'bg-muted/30'">
+                        <div class="flex items-center space-x-2">
+                          <span class="font-bold text-sm">{{ currency.rank }}</span>
+                          <span class="font-medium">{{ currency.currency }}</span>
+                        </div>
+                        <span class="text-sm" :class="currency.strength > 0 ? 'text-green-600' : 'text-red-600'">
+                          {{ currency.strength.toFixed(1) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Top Correlations -->
+                  <div>
+                    <h4 class="font-medium mb-3">Strong Correlations</h4>
+                    <div class="space-y-2 max-h-32 overflow-y-auto">
+                      <div v-for="corr in correlationMatrix.slice(0, 6)" :key="`${corr.pair1}-${corr.pair2}`" class="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <div class="text-sm">
+                          <span class="font-medium">{{ corr.pair1 }}</span> vs <span class="font-medium">{{ corr.pair2 }}</span>
+                        </div>
+                        <div class="text-right">
+                          <span :class="corr.correlation > 0 ? 'text-green-600' : 'text-red-600'" class="font-medium text-sm">
+                            {{ (corr.correlation * 100).toFixed(0) }}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Market Insights -->
+                <div v-if="marketInsights.length > 0" class="mt-4 pt-4 border-t">
+                  <h4 class="font-medium mb-2">Market Insights</h4>
+                  <div class="space-y-2">
+                    <div v-for="insight in marketInsights.slice(0, 2)" :key="insight.type + insight.timestamp" class="p-2 rounded text-sm" :class="insight.significance === 'high' ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'">
+                      <p class="font-medium">{{ insight.type.replace('_', ' ').toUpperCase() }}</p>
+                      <p class="text-xs">{{ insight.description }}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </template>

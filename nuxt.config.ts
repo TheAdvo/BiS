@@ -32,16 +32,30 @@ export default defineNuxtConfig({
             // Split vendor dependencies for better caching
             'vendor-ui': ['reka-ui', 'lucide-vue-next'],
             'vendor-utils': ['@vueuse/core', 'class-variance-authority', 'clsx', 'tailwind-merge'],
-            'vendor-validation': ['vee-validate', 'zod']
+            'vendor-validation': ['vee-validate', 'zod'],
+            // Add trading-specific chunk
+            'vendor-trading': ['@oanda/v20']
           }
         }
-      }
+      },
+      // Enable chunk size warnings
+      chunkSizeWarningLimit: 500
+    },
+    // Optimize deps
+    optimizeDeps: {
+      include: ['@vueuse/core', 'reka-ui']
     }
   },
 
   // Optimize bundle size
   build: {
     analyze: process.env.ANALYZE === 'true'
+  },
+
+  // Add performance hints
+  experimental: {
+    payloadExtraction: false, // Reduce hydration payload
+    treeshakeClientOnly: true // Better tree-shaking
   },
 
   // Configure auto-imports for better tree-shaking

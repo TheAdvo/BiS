@@ -198,3 +198,60 @@ export interface OandaTradesResponse {
   /** Last transaction ID */
   lastTransactionID: string;
 }
+
+/**
+ * OANDA candlestick data for technical analysis
+ */
+export interface OandaCandle {
+  /** Timestamp of the candle */
+  time: string;
+  /** Bid prices for the candle */
+  bid?: {
+    /** Opening price */
+    o: string;
+    /** High price */
+    h: string;
+    /** Low price */
+    l: string;
+    /** Closing price */
+    c: string;
+  };
+  /** Ask prices for the candle */
+  ask?: {
+    /** Opening price */
+    o: string;
+    /** High price */
+    h: string;
+    /** Low price */
+    l: string;
+    /** Closing price */
+    c: string;
+  };
+  /** Mid prices for the candle */
+  mid?: {
+    /** Opening price */
+    o: string;
+    /** High price */
+    h: string;
+    /** Low price */
+    l: string;
+    /** Closing price */
+    c: string;
+  };
+  /** Trading volume */
+  volume: number;
+  /** Whether the candle is complete */
+  complete: boolean;
+}
+
+/**
+ * Response structure for OANDA candles API endpoint
+ */
+export interface OandaCandlesResponse {
+  /** Instrument identifier */
+  instrument: string;
+  /** Granularity of the candles */
+  granularity: string;
+  /** Array of candle data */
+  candles: OandaCandle[];
+}

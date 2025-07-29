@@ -29,6 +29,11 @@ const items = ref<NavItem[]>([
     icon: "lucide:layout-dashboard",
   },
   {
+    title: "Analytics",
+    path: "/analytics",
+    icon: "lucide:trending-up",
+  },
+  {
     title: "Pricing",
     path: "#pricing",
     icon: "iconoir:money-square",
