@@ -97,7 +97,7 @@
   --font-serif: Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Monaco", "Cascadia Code", "Consolas",
     "Courier New", monospace;
-  --radius: 0.5rem;
+  --radius: 0.1rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1),

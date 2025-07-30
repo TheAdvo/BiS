@@ -47,7 +47,7 @@ onMounted(async () => {
 
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full">
       <!-- Left side - Strategy Editor & Management (5 columns) -->
-      <div class="xl:col-span-5 space-y-6">
+      <div class="xl:col-span-5 space-y-2">
         <StrategyScriptEditor />
         <BotManagementPanel />
       </div>

@@ -8,7 +8,7 @@
       </CardHeader>
       <CardContent>
         <div v-if="tradesPending" class="text-2xl font-bold animate-pulse opacity-50 transition-opacity duration-300">{{ stats.activeBots || '--' }}</div>
-        <div v-else-if="tradesError" class="text-2xl font-bold text-red-500">Error</div>
+        <div v-else-if="tradesError" class="text-2xl font-bold text-destructive">Error</div>
         <div v-else class="text-2xl font-bold transition-all duration-300">{{ stats.activeBots }}</div>
         <p class="text-xs text-muted-foreground">
           <span class="text-green-500">+{{ stats.botsStartedToday }}</span> opened today
@@ -24,12 +24,12 @@
       </CardHeader>
       <CardContent>
         <div v-if="accountPending" class="text-2xl font-bold animate-pulse opacity-50 transition-opacity duration-300">${{ stats.totalPnL ? Math.abs(stats.totalPnL).toFixed(2) : '--' }}</div>
-        <div v-else-if="accountError" class="text-2xl font-bold text-red-500">Error</div>
-        <div v-else class="text-2xl font-bold transition-all duration-300" :class="stats.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'">
+        <div v-else-if="accountError" class="text-2xl font-bold text-destructive">Error</div>
+        <div v-else class="text-2xl font-bold transition-all duration-300" :class="stats.totalPnL >= 0 ? 'text-green-500' : 'text-destructive'">
           {{ stats.totalPnL >= 0 ? '+' : '' }}${{ Math.abs(stats.totalPnL).toFixed(2) }}
         </div>
         <p class="text-xs text-muted-foreground">
-          <span :class="stats.pnlChange >= 0 ? 'text-green-500' : 'text-red-500'">
+          <span :class="stats.pnlChange >= 0 ? 'text-green-500' : 'text-destructive'">
             {{ stats.pnlChange >= 0 ? '+' : '' }}{{ stats.pnlChange.toFixed(1) }}%
           </span> of balance
         </p>
@@ -44,7 +44,7 @@
       </CardHeader>
       <CardContent>
         <div v-if="tradesPending" class="text-2xl font-bold animate-pulse opacity-50 transition-opacity duration-300">{{ stats.tradesToday || '--' }}</div>
-        <div v-else-if="tradesError" class="text-2xl font-bold text-red-500">Error</div>
+        <div v-else-if="tradesError" class="text-2xl font-bold text-destructive">Error</div>
         <div v-else class="text-2xl font-bold transition-all duration-300">{{ stats.tradesToday }}</div>
         <p class="text-xs text-muted-foreground">
           Win Rate: <span class="text-green-500">{{ stats.winRate.toFixed(1) }}%</span>
@@ -270,7 +270,7 @@ onUnmounted(() => {
 }
 
 .text-green-500,
-.text-red-500 {
+.text-destructive {
   transition: color 0.3s ease;
 }
 

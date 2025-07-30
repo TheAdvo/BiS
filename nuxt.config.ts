@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxt/eslint',
     'shadcn-nuxt',
+    'nuxt-monaco-editor'
   ],
 
   shadcn: {
@@ -92,6 +93,14 @@ export default defineNuxtConfig({
           'Referrer-Policy': 'strict-origin-when-cross-origin'
         }
       }
+    }
+  },
+
+  monacoEditor: {
+    locale: 'en',
+    componentName: {
+      codeEditor: 'MonacoEditor',
+      diffEditor: 'MonacoDiffEditor'
     }
   }
 })

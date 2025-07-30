@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-[800px]">
     <Card class="h-full">
-      <CardHeader class="pb-3 border-b">
+      <CardHeader class="">
         <div class="flex items-center justify-between">
           <CardTitle class="text-base font-bold flex items-center gap-2">
             <Zap class="w-4 h-4" />
