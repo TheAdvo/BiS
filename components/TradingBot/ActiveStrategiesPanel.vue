@@ -165,20 +165,22 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import type { OandaTrade, OandaPosition } from '@/types/Oanda'
 import { useOandaStore } from '@/stores/oanda'
 
-// Use centralized OANDA store instead of individual composables
-const {
-  account: accountData,
-  trades: tradesData,
-  positions: positionsData,
-  accountError,
-  tradesError,
-  positionsError,
-  isTradesLoading: tradesPending,
-  isPositionsLoading: positionsPending,
-  refreshTrades,
-  refreshPositions,
-  isRefreshing: storeRefreshing
-} = useOandaStore()
+
+// Use centralized OANDA store (Pinia)
+const oanda = useOandaStore()
+
+// State from Pinia store
+const accountData = computed(() => oanda.getAccount)
+const tradesData = computed(() => oanda.getTrades)
+const positionsData = computed(() => oanda.getPositions)
+const accountError = computed(() => oanda.getAccountError)
+const tradesError = computed(() => oanda.getTradesError)
+const positionsError = computed(() => oanda.getPositionsError)
+const tradesPending = computed(() => oanda.getIsTradesLoading)
+const positionsPending = computed(() => oanda.getIsPositionsLoading)
+const refreshTrades = oanda.refreshTrades
+const refreshPositions = oanda.refreshPositions
+const storeRefreshing = computed(() => oanda.isRefreshing)
 
 // State
 const isRefreshing = ref(false)

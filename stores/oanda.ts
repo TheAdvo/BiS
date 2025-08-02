@@ -1,253 +1,208 @@
-// stores/oanda.ts - Centralized OANDA data management
+// stores/oanda.ts - Centralized OANDA data management (Pinia version)
+import { defineStore } from 'pinia'
 import type { OandaAccount, OandaTradesResponse, OandaPositionsResponse, PriceMessage, OandaCandlesResponse } from '@/types/Oanda'
 
-interface OandaStore {
-  // Account data
-  account: OandaAccount | null
-  accountLoading: boolean
-  accountError: any
-
-  // Trades data
-  trades: OandaTradesResponse | null
-  tradesLoading: boolean
-  tradesError: any
-
-  // Positions data
-  positions: OandaPositionsResponse | null
-  positionsLoading: boolean
-  positionsError: any
-
-  // Pricing data cache
-  pricingCache: Map<string, { data: { prices: PriceMessage[] }, timestamp: number }>
-
-  // Candles data cache
-  candlesCache: Map<string, { data: OandaCandlesResponse, timestamp: number }>
-
-  // Last refresh timestamps
-  lastAccountRefresh: number
-  lastTradesRefresh: number
-  lastPositionsRefresh: number
-
-  // Loading states
-  isRefreshing: boolean
-}
-
-export const useOandaStore = () => {
-  const store = useState<OandaStore>('oanda-store', () => ({
-    account: null,
+export const useOandaStore = defineStore('oanda', {
+  state: () => ({
+    // ---[ Account data and loading/error state ]---
+    account: null as OandaAccount | null,
     accountLoading: false,
-    accountError: null,
+    accountError: null as any,
 
-    trades: null,
+    // ---[ Trades data and loading/error state ]---
+    trades: null as OandaTradesResponse | null,
     tradesLoading: false,
-    tradesError: null,
+    tradesError: null as any,
 
-    positions: null,
+    // ---[ Positions data and loading/error state ]---
+    positions: null as OandaPositionsResponse | null,
     positionsLoading: false,
-    positionsError: null,
+    positionsError: null as any,
 
-    pricingCache: new Map(),
-    candlesCache: new Map(),
+    // ---[ Pricing data cache: instrument prices ]---
+    pricingCache: new Map<string, { data: { prices: PriceMessage[] }, timestamp: number }>(),
 
+    // ---[ Candles data cache: historical candles ]---
+    candlesCache: new Map<string, { data: OandaCandlesResponse, timestamp: number }>(),
+
+    // ---[ Last refresh timestamps for cache validation ]---
     lastAccountRefresh: 0,
     lastTradesRefresh: 0,
     lastPositionsRefresh: 0,
 
+    // ---[ Global loading state for refresh operations ]---
     isRefreshing: false
-  }))
+  }),
+  getters: {
+    // ---[ Account, trades, positions getters (renamed to avoid conflicts) ]---
+    getAccount: (state) => state.account,
+    getTrades: (state) => state.trades,
+    getPositions: (state) => state.positions,
 
-  // Cache TTL configurations (in milliseconds)
-  const CACHE_TTL = {
-    account: 30000,   // 30 seconds
-    trades: 15000,    // 15 seconds
-    positions: 15000, // 15 seconds
-    pricing: 5000,    // 5 seconds
-    candles: 60000    // 60 seconds
+    // ---[ Loading state getters ]---
+    getIsAccountLoading: (state) => state.accountLoading,
+    getIsTradesLoading: (state) => state.tradesLoading,
+    getIsPositionsLoading: (state) => state.positionsLoading,
+    getIsRefreshing: (state) => state.isRefreshing,
+
+    // ---[ Error state getters ]---
+    getAccountError: (state) => state.accountError,
+    getTradesError: (state) => state.tradesError,
+    getPositionsError: (state) => state.positionsError,
+  },
+  actions: {
+    // Cache TTL configurations (in milliseconds)
+    // ---[ Caching configuration for each data type ]---
+    CACHE_TTL: {
+      account: 30000,   // 30 seconds
+      trades: 15000,    // 15 seconds
+      positions: 15000, // 15 seconds
+      pricing: 5000,    // 5 seconds
+      candles: 60000    // 60 seconds
+    },
+
+    // Helper to check if data is fresh
+    // ---[ Utility: Checks if cached data is still valid ]---
+    isDataFresh(lastRefresh: number, ttl: number) {
+      return Date.now() - lastRefresh < ttl
+    },
+
+    // Refresh account data with caching
+    // ---[ Account: Fetches and caches account data ]---
+    async refreshAccount(force = false) {
+      if (!force && this.isDataFresh(this.lastAccountRefresh, this.CACHE_TTL.account)) {
+        return this.account
+      }
+      if (this.accountLoading) return this.account
+      try {
+        this.accountLoading = true
+        this.accountError = null
+        const data = await $fetch<OandaAccount>('/api/oanda/account')
+        this.account = data
+        this.lastAccountRefresh = Date.now()
+        return data
+      } catch (error) {
+        this.accountError = error
+        throw error
+      } finally {
+        this.accountLoading = false
+      }
+    },
+
+    // Refresh trades data with caching
+    // ---[ Trades: Fetches and caches trades data ]---
+    async refreshTrades(force = false) {
+      if (!force && this.isDataFresh(this.lastTradesRefresh, this.CACHE_TTL.trades)) {
+        return this.trades
+      }
+      if (this.tradesLoading) return this.trades
+      try {
+        this.tradesLoading = true
+        this.tradesError = null
+        const data = await $fetch<OandaTradesResponse>('/api/oanda/trades')
+        this.trades = data
+        this.lastTradesRefresh = Date.now()
+        return data
+      } catch (error) {
+        this.tradesError = error
+        throw error
+      } finally {
+        this.tradesLoading = false
+      }
+    },
+
+    // ---[ Positions: Fetches and caches positions data ]---
+    // This action retrieves the latest positions from the OANDA API, using cache validation to avoid unnecessary requests.
+    async refreshPositions(force = false) {
+      if (!force && this.isDataFresh(this.lastPositionsRefresh, this.CACHE_TTL.positions)) {
+        return this.positions
+      }
+      if (this.positionsLoading) return this.positions
+      try {
+        this.positionsLoading = true
+        this.positionsError = null
+        const data = await $fetch<OandaPositionsResponse>('/api/oanda/positions')
+        this.positions = data
+        this.lastPositionsRefresh = Date.now()
+        return data
+      } catch (error) {
+        this.positionsError = error
+        throw error
+      } finally {
+        this.positionsLoading = false
+      }
+    },
+
+    // ---[ Pricing: Fetches and caches pricing data for instruments ]---
+    // This action retrieves current pricing for the specified instruments from the OANDA API, using cache validation for efficiency.
+    async getPricingData(instruments: string, force = false) {
+      const cacheKey = instruments
+      const cached = this.pricingCache.get(cacheKey)
+      if (!force && cached && this.isDataFresh(cached.timestamp, this.CACHE_TTL.pricing)) {
+        return cached.data
+      }
+      try {
+        const data = await $fetch<{ prices: PriceMessage[] }>('/api/oanda/pricing', {
+          query: { instruments }
+        })
+        this.pricingCache.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        })
+        return data
+      } catch (error) {
+        console.error('Error fetching pricing data:', error)
+        throw error
+      }
+    },
+
+    // Get candles data with caching
+    // ---[ Candles: Fetches and caches historical candle data ]---
+    async getCandlesData(instrument: string, granularity: string, count: number, force = false) {
+      const cacheKey = `${instrument}-${granularity}-${count}`
+      const cached = this.candlesCache.get(cacheKey)
+      if (!force && cached && this.isDataFresh(cached.timestamp, this.CACHE_TTL.candles)) {
+        return cached.data
+      }
+      try {
+        const data = await $fetch<OandaCandlesResponse>('/api/oanda/candles', {
+          query: { instrument, granularity, count }
+        })
+        this.candlesCache.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        })
+        return data
+      } catch (error) {
+        console.error('Error fetching candles data:', error)
+        throw error
+      }
+    },
+
+    // Refresh all core data (account, trades, positions)
+    // ---[ Utility: Refreshes all major OANDA data types in parallel ]---
+    async refreshAll(force = false) {
+      if (this.isRefreshing && !force) return
+      try {
+        this.isRefreshing = true
+        await Promise.all([
+          this.refreshAccount(force),
+          this.refreshTrades(force),
+          this.refreshPositions(force)
+        ])
+      } finally {
+        this.isRefreshing = false
+      }
+    },
+
+    // Clear all caches
+    // ---[ Utility: Clears all cached data and resets refresh timers ]---
+    clearCache() {
+      this.pricingCache.clear()
+      this.candlesCache.clear()
+      this.lastAccountRefresh = 0
+      this.lastTradesRefresh = 0
+      this.lastPositionsRefresh = 0
+    }
   }
-
-  // Helper to check if data is fresh
-  const isDataFresh = (lastRefresh: number, ttl: number) => {
-    return Date.now() - lastRefresh < ttl
-  }
-
-  // Refresh account data with caching
-  const refreshAccount = async (force = false) => {
-    if (!force && isDataFresh(store.value.lastAccountRefresh, CACHE_TTL.account)) {
-      return store.value.account
-    }
-
-    if (store.value.accountLoading) return store.value.account
-
-    try {
-      store.value.accountLoading = true
-      store.value.accountError = null
-
-      const data = await $fetch<OandaAccount>('/api/oanda/account')
-      store.value.account = data
-      store.value.lastAccountRefresh = Date.now()
-
-      return data
-    } catch (error) {
-      store.value.accountError = error
-      throw error
-    } finally {
-      store.value.accountLoading = false
-    }
-  }
-
-  // Refresh trades data with caching
-  const refreshTrades = async (force = false) => {
-    if (!force && isDataFresh(store.value.lastTradesRefresh, CACHE_TTL.trades)) {
-      return store.value.trades
-    }
-
-    if (store.value.tradesLoading) return store.value.trades
-
-    try {
-      store.value.tradesLoading = true
-      store.value.tradesError = null
-
-      const data = await $fetch<OandaTradesResponse>('/api/oanda/trades')
-      store.value.trades = data
-      store.value.lastTradesRefresh = Date.now()
-
-      return data
-    } catch (error) {
-      store.value.tradesError = error
-      throw error
-    } finally {
-      store.value.tradesLoading = false
-    }
-  }
-
-  // Refresh positions data with caching
-  const refreshPositions = async (force = false) => {
-    if (!force && isDataFresh(store.value.lastPositionsRefresh, CACHE_TTL.positions)) {
-      return store.value.positions
-    }
-
-    if (store.value.positionsLoading) return store.value.positions
-
-    try {
-      store.value.positionsLoading = true
-      store.value.positionsError = null
-
-      const data = await $fetch<OandaPositionsResponse>('/api/oanda/positions')
-      store.value.positions = data
-      store.value.lastPositionsRefresh = Date.now()
-
-      return data
-    } catch (error) {
-      store.value.positionsError = error
-      throw error
-    } finally {
-      store.value.positionsLoading = false
-    }
-  }
-
-  // Get pricing data with caching
-  const getPricingData = async (instruments: string, force = false) => {
-    const cacheKey = instruments
-    const cached = store.value.pricingCache.get(cacheKey)
-
-    if (!force && cached && isDataFresh(cached.timestamp, CACHE_TTL.pricing)) {
-      return cached.data
-    }
-
-    try {
-      const data = await $fetch<{ prices: PriceMessage[] }>('/api/oanda/pricing', {
-        query: { instruments }
-      })
-
-      store.value.pricingCache.set(cacheKey, {
-        data,
-        timestamp: Date.now()
-      })
-
-      return data
-    } catch (error) {
-      console.error('Error fetching pricing data:', error)
-      throw error
-    }
-  }
-
-  // Get candles data with caching
-  const getCandlesData = async (instrument: string, granularity: string, count: number, force = false) => {
-    const cacheKey = `${instrument}-${granularity}-${count}`
-    const cached = store.value.candlesCache.get(cacheKey)
-
-    if (!force && cached && isDataFresh(cached.timestamp, CACHE_TTL.candles)) {
-      return cached.data
-    }
-
-    try {
-      const data = await $fetch<OandaCandlesResponse>('/api/oanda/candles', {
-        query: { instrument, granularity, count }
-      })
-
-      store.value.candlesCache.set(cacheKey, {
-        data,
-        timestamp: Date.now()
-      })
-
-      return data
-    } catch (error) {
-      console.error('Error fetching candles data:', error)
-      throw error
-    }
-  }
-
-  // Refresh all core data (account, trades, positions)
-  const refreshAll = async (force = false) => {
-    if (store.value.isRefreshing && !force) return
-
-    try {
-      store.value.isRefreshing = true
-
-      await Promise.all([
-        refreshAccount(force),
-        refreshTrades(force),
-        refreshPositions(force)
-      ])
-    } finally {
-      store.value.isRefreshing = false
-    }
-  }
-
-  // Clear all caches
-  const clearCache = () => {
-    store.value.pricingCache.clear()
-    store.value.candlesCache.clear()
-    store.value.lastAccountRefresh = 0
-    store.value.lastTradesRefresh = 0
-    store.value.lastPositionsRefresh = 0
-  }
-
-  return {
-    // State
-    store: readonly(store),
-
-    // Computed getters
-    account: computed(() => store.value.account),
-    trades: computed(() => store.value.trades),
-    positions: computed(() => store.value.positions),
-
-    isAccountLoading: computed(() => store.value.accountLoading),
-    isTradesLoading: computed(() => store.value.tradesLoading),
-    isPositionsLoading: computed(() => store.value.positionsLoading),
-    isRefreshing: computed(() => store.value.isRefreshing),
-
-    accountError: computed(() => store.value.accountError),
-    tradesError: computed(() => store.value.tradesError),
-    positionsError: computed(() => store.value.positionsError),
-
-    // Actions
-    refreshAccount,
-    refreshTrades,
-    refreshPositions,
-    refreshAll,
-    getPricingData,
-    getCandlesData,
-    clearCache
-  }
-}
+})

@@ -125,22 +125,24 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Bot, TrendingUp, Activity, Wifi, RefreshCw } from 'lucide-vue-next'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+
 import { useOandaStore } from '@/stores/oanda'
 
-// Use centralized OANDA store instead of individual composables
-const {
-  account: accountData,
-  trades: tradesData,
-  positions: positionsData,
-  isAccountLoading: accountPending,
-  isTradesLoading: tradesPending,
-  isPositionsLoading: positionsPending,
-  accountError,
-  tradesError,
-  positionsError,
-  refreshAll,
-  isRefreshing: storeRefreshing
-} = useOandaStore()
+// Use centralized OANDA store (Pinia)
+const oanda = useOandaStore()
+
+// State from Pinia store
+const accountData = computed(() => oanda.getAccount)
+const tradesData = computed(() => oanda.getTrades)
+const positionsData = computed(() => oanda.getPositions)
+const accountPending = computed(() => oanda.getIsAccountLoading)
+const tradesPending = computed(() => oanda.getIsTradesLoading)
+const positionsPending = computed(() => oanda.getIsPositionsLoading)
+const accountError = computed(() => oanda.getAccountError)
+const tradesError = computed(() => oanda.getTradesError)
+const positionsError = computed(() => oanda.getPositionsError)
+const refreshAll = oanda.refreshAll
+const storeRefreshing = computed(() => oanda.isRefreshing)
 
 // State
 const isRefreshing = ref(false)

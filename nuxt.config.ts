@@ -12,7 +12,8 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxt/eslint',
     'shadcn-nuxt',
-    'nuxt-monaco-editor'
+    'nuxt-monaco-editor',
+    '@pinia/nuxt'
   ],
 
   shadcn: {

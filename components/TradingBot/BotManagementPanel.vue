@@ -148,7 +148,8 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Bot, RefreshCw, Plus, Play, Pause, Settings, Trash2, Loader2 } from 'lucide-vue-next'
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useBotsStore } from '@/stores/bots'
 
 // Types
 interface TradingBot {
@@ -172,30 +173,18 @@ interface CreateBotResponse {
   bot: TradingBot
 }
 
-// State
-const bots = ref<TradingBot[]>([])
-const isRefreshing = ref(false)
-const showCreateBotDialog = ref(false)
-
-// New bot form
-const newBot = ref({
-  name: '',
-  strategy: '',
-  instruments: [] as string[],
-  riskPerTrade: 1.0,
-  maxPositions: 3
+// ---[ Pinia Store: Centralized bot management ]---
+const botsStore = useBotsStore()
+const bots = computed(() => botsStore.bots)
+const isRefreshing = computed(() => botsStore.isRefreshing)
+const showCreateBotDialog = computed({
+  get: () => botsStore.showCreateBotDialog,
+  set: (val: boolean) => botsStore.setShowCreateBotDialog(val)
 })
-
+const newBot = computed(() => botsStore.newBot)
 const availableInstruments = ['EUR_USD', 'GBP_USD', 'USD_JPY', 'AUD_USD', 'USD_CAD', 'USD_CHF', 'NZD_USD', 'XAU_USD']
-
-// Computed
-const activeBots = computed(() => bots.value.filter(bot => bot.status === 'running'))
-
-const canCreateBot = computed(() => {
-  return newBot.value.name.trim() &&
-    newBot.value.strategy &&
-    newBot.value.instruments.length > 0
-})
+const activeBots = computed(() => botsStore.activeBots)
+const canCreateBot = computed(() => botsStore.canCreateBot)
 
 // Methods
 const getBotStatusColor = (status: string) => {
@@ -218,116 +207,16 @@ const getBotStatusVariant = (status: string) => {
   }
 }
 
-const toggleInstrument = (instrument: string) => {
-  const index = newBot.value.instruments.indexOf(instrument)
-  if (index > -1) {
-    newBot.value.instruments.splice(index, 1)
-  } else {
-    newBot.value.instruments.push(instrument)
-  }
-}
-
-const refreshBots = async () => {
-  try {
-    isRefreshing.value = true
-    const response = await $fetch<BotResponse>('/api/trading-bot/bots')
-    bots.value = response.bots || []
-  } catch (error) {
-    console.error('Failed to refresh bots:', error)
-  } finally {
-    isRefreshing.value = false
-  }
-}
-
-const createBot = async () => {
-  try {
-    const response = await $fetch<CreateBotResponse>('/api/trading-bot/bots', {
-      method: 'POST',
-      body: newBot.value
-    })
-
-    bots.value.push(response.bot)
-    showCreateBotDialog.value = false
-
-    // Reset form
-    newBot.value = {
-      name: '',
-      strategy: '',
-      instruments: [],
-      riskPerTrade: 1.0,
-      maxPositions: 3
-    }
-  } catch (error) {
-    console.error('Failed to create bot:', error)
-  }
-}
-
-const toggleBot = async (bot: TradingBot) => {
-  try {
-    const action = bot.status === 'running' ? 'stop' : 'start'
-    await $fetch(`/api/trading-bot/bots/${bot.id}/${action}`, {
-      method: 'POST'
-    })
-
-    bot.status = action === 'start' ? 'running' : 'stopped'
-  } catch (error) {
-    console.error(`Failed to ${bot.status === 'running' ? 'stop' : 'start'} bot:`, error)
-  }
-}
-
-const editBot = (bot: TradingBot) => {
-  // TODO: Open edit dialog
-  console.log('Edit bot:', bot)
-}
-
-const deleteBot = async (botId: string) => {
-  try {
-    await $fetch(`/api/trading-bot/bots/${botId}`, {
-      method: 'DELETE'
-    })
-
-    const index = bots.value.findIndex(bot => bot.id === botId)
-    if (index > -1) {
-      bots.value.splice(index, 1)
-    }
-  } catch (error) {
-    console.error('Failed to delete bot:', error)
-  }
-}
-
-// Load mock data for now
-const loadMockData = () => {
-  bots.value = [
-    {
-      id: '1',
-      name: 'Scalper Pro',
-      strategy: 'sma_crossover',
-      status: 'running',
-      instruments: ['EUR_USD', 'GBP_USD'],
-      pnl: 245.67,
-      trades: 23,
-      createdAt: '2025-07-28T10:00:00Z',
-      riskPerTrade: 0.5,
-      maxPositions: 2
-    },
-    {
-      id: '2',
-      name: 'Trend Rider',
-      strategy: 'breakout',
-      status: 'stopped',
-      instruments: ['USD_JPY'],
-      pnl: -12.34,
-      trades: 8,
-      createdAt: '2025-07-28T09:30:00Z',
-      riskPerTrade: 1.0,
-      maxPositions: 3
-    }
-  ]
-}
+const toggleInstrument = (instrument: string) => botsStore.toggleInstrument(instrument)
+const refreshBots = async () => botsStore.refreshBots()
+const createBot = async () => botsStore.createBot()
+const toggleBot = async (bot: any) => botsStore.toggleBot(bot)
+const editBot = (bot: any) => { /* TODO: Open edit dialog */ console.log('Edit bot:', bot) }
+const deleteBot = async (botId: string) => botsStore.deleteBot(botId)
 
 // Lifecycle
 onMounted(() => {
-  loadMockData()
-  // refreshBots()
+  botsStore.loadMockData()
+  // botsStore.refreshBots()
 })
 </script>

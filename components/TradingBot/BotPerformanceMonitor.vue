@@ -138,66 +138,77 @@
 </template>
 
 <script setup lang="ts">
+// ---[ UI Components and Icons ]---
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Activity, RefreshCw, Bot } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useOandaStore } from '@/stores/oanda'
 
-// State
+// ---[ State: Selected period and refresh status ]---
 const selectedPeriod = ref('24h')
 const isRefreshing = ref(false)
 
-const performanceSummary = ref({
-  totalPnL: 156.78,
-  winRate: 68.4,
-  profitFactor: 1.42
-})
+// ---[ Pinia Store: OANDA trading data ]---
+const oanda = useOandaStore()
 
-const botPerformance = ref([
-  {
-    id: '1',
-    name: 'Scalper Pro',
-    status: 'running',
-    runtime: '2h 34m',
-    pnl: 89.23,
-    trades: 15,
-    winRate: 73.3,
-    maxDrawdown: 2.1
-  },
-  {
-    id: '2',
-    name: 'Trend Rider',
-    status: 'running',
-    runtime: '1h 12m',
-    pnl: 67.55,
-    trades: 8,
-    winRate: 62.5,
-    maxDrawdown: 3.8
-  },
-  {
-    id: '3',
-    name: 'Range Bot',
-    status: 'stopped',
-    runtime: '45m',
-    pnl: -23.12,
-    trades: 12,
-    winRate: 41.7,
-    maxDrawdown: 5.2
+// ---[ Computed: Performance summary metrics from trades ]---
+const performanceSummary = computed(() => {
+  // OANDA trades response shape: { trades: Trade[], lastTransactionID: string }
+  const tradesArr = Array.isArray(oanda.getTrades?.trades) ? oanda.getTrades.trades : [];
+  if (!tradesArr.length) {
+    return { totalPnL: 0, winRate: 0, profitFactor: 0 };
   }
-])
+  const totalPnL = tradesArr.reduce((sum: number, t: any) => sum + (parseFloat(t.unrealizedPL ?? '0')), 0);
+  const wins = tradesArr.filter((t: any) => parseFloat(t.unrealizedPL ?? '0') > 0).length;
+  const losses = tradesArr.filter((t: any) => parseFloat(t.unrealizedPL ?? '0') < 0).length;
+  const winRate = tradesArr.length ? (wins / tradesArr.length) * 100 : 0;
+  const grossProfit = tradesArr.filter((t: any) => parseFloat(t.unrealizedPL ?? '0') > 0).reduce((sum: number, t: any) => sum + parseFloat(t.unrealizedPL ?? '0'), 0);
+  const grossLoss = tradesArr.filter((t: any) => parseFloat(t.unrealizedPL ?? '0') < 0).reduce((sum: number, t: any) => sum + Math.abs(parseFloat(t.unrealizedPL ?? '0')), 0);
+  const profitFactor = grossLoss ? grossProfit / grossLoss : 0;
+  return { totalPnL, winRate, profitFactor };
+});
 
-const riskMetrics = ref({
-  sharpeRatio: 1.23,
-  maxDrawdown: 5.2,
-  calmarRatio: 0.87,
-  avgTrade: 12.45,
-  bestTrade: 45.67,
-  worstTrade: 23.12
-})
+// ---[ Computed: Bot performance breakdown from positions ]---
+const botPerformance = computed(() => {
+  // OANDA positions response shape: { positions: Position[], ... }
+  const positionsArr = Array.isArray(oanda.getPositions?.positions) ? oanda.getPositions.positions : [];
+  return positionsArr.map((pos: any) => ({
+    id: pos.instrument,
+    name: pos.instrument.replace('_', '/'),
+    status: parseFloat(pos.unrealizedPL ?? '0') !== 0 ? 'running' : 'stopped',
+    runtime: 'N/A', // Could be computed if you track open time
+    pnl: parseFloat(pos.unrealizedPL ?? '0'),
+    trades: Array.isArray(pos.tradeIDs) ? pos.tradeIDs.length : 0,
+    winRate: 0, // Could be computed if you map trades to positions
+    maxDrawdown: 0 // Placeholder, needs historical data
+  }));
+});
 
-// Methods
+// ---[ Computed: Risk metrics from trades ]---
+const riskMetrics = computed(() => {
+  const tradesArr = Array.isArray(oanda.getTrades?.trades) ? oanda.getTrades.trades : [];
+  if (!tradesArr.length) {
+    return { sharpeRatio: 0, maxDrawdown: 0, calmarRatio: 0, avgTrade: 0, bestTrade: 0, worstTrade: 0 };
+  }
+  const returns = tradesArr.map((t: any) => parseFloat(t.unrealizedPL ?? '0'));
+  const avgTrade = returns.reduce((sum: number, v: number) => sum + v, 0) / returns.length;
+  const bestTrade = Math.max(...returns);
+  const worstTrade = Math.min(...returns);
+  // Sharpe/Calmar/Drawdown are placeholders, real calculation needs more data
+  return {
+    sharpeRatio: 0,
+    maxDrawdown: 0,
+    calmarRatio: 0,
+    avgTrade,
+    bestTrade,
+    worstTrade: Math.abs(worstTrade)
+  };
+});
+
+// ---[ UI Helper: Bot status color ]---
 const getBotStatusColor = (status: string) => {
   switch (status) {
     case 'running': return 'bg-green-500 text-white'
@@ -207,17 +218,14 @@ const getBotStatusColor = (status: string) => {
   }
 }
 
+// ---[ Refresh logic: Calls Pinia store actions to refresh data ]---
 const refreshPerformance = async () => {
   try {
     isRefreshing.value = true
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 600))
-
-    // Update performance data (would be real API data)
-    performanceSummary.value.totalPnL += (Math.random() - 0.5) * 20
-    performanceSummary.value.winRate = Math.max(40, Math.min(90, performanceSummary.value.winRate + (Math.random() - 0.5) * 5))
-
+    await Promise.all([
+      oanda.refreshTrades(true),
+      oanda.refreshPositions(true)
+    ])
   } catch (error) {
     console.error('Failed to refresh performance:', error)
   } finally {
@@ -225,7 +233,7 @@ const refreshPerformance = async () => {
   }
 }
 
-// Auto-refresh every 15 seconds
+// ---[ Lifecycle: Auto-refresh every 15 seconds ]---
 let refreshInterval: NodeJS.Timeout | null = null
 
 onMounted(() => {

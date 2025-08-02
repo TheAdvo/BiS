@@ -8,21 +8,25 @@
             <span>Strategy Script Editor</span>
             <Badge variant="outline" class="text-xs">
               <div class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1"></div>
-              JavaScript
+              TypeScript
             </Badge>
           </CardTitle>
           <div class="flex items-center gap-2">
-            <Button variant="outline" size="sm" @click="loadTemplate">
+            <Button variant="outline" size="sm" @click="loadTemplate" aria-label="Load template">
               <FileText class="w-3 h-3 mr-1" />
               Template
             </Button>
-            <Button variant="outline" size="sm" @click="saveStrategy" :disabled="!strategyCode.trim()">
+            <Button variant="outline" size="sm" @click="saveStrategy" :disabled="!strategyCode.trim()" aria-label="Save strategy">
               <Save class="w-3 h-3 mr-1" />
               Save
             </Button>
-            <Button size="sm" @click="deployStrategy" :disabled="!strategyCode.trim() || isDeploying">
+            <Button size="sm" @click="deployStrategy" :disabled="!strategyCode.trim() || isDeploying" aria-label="Deploy strategy">
               <Play class="w-3 h-3 mr-1" />
-              {{ isDeploying ? 'Deploying...' : 'Deploy' }}
+              <span v-if="isDeploying">
+                <span class="animate-spin mr-1">⏳</span>
+                Deploying...
+              </span>
+              <span v-else>Deploy</span>
             </Button>
           </div>
         </div>
@@ -39,21 +43,48 @@
 </template>
 
 <script setup lang="ts">
+// ---[ UI Components and Icons ]---
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Code, FileText, Save, Play } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useStrategyStore } from '@/stores/strategy'
 import type { editor } from 'monaco-editor'
 
-// Default strategy template
-const defaultTemplate = `// ADVOAI Trading Strategy Template
-// This strategy will be executed in real-time against OANDA market data`
+// ---[ Default strategy template function ]---
+function getDefaultStrategyTemplate(): string {
+  return `// ADVOAI Trading Strategy Template
+// This strategy will be executed in real-time against OANDA market data
 
-const strategyCode = ref(defaultTemplate)
-const isDeploying = ref(false)
+function onTick(marketData) {
+  // Example: Simple moving average crossover
+  // Replace with your strategy logic
 
-// Monaco Editor options
+  // const fastMA = calculateMA(marketData, 10)
+  // const slowMA = calculateMA(marketData, 50)
+  // if (fastMA > slowMA) {
+  //   return { action: 'BUY' }
+  // } else if (fastMA < slowMA) {
+  //   return { action: 'SELL' }
+  // }
+  // return { action: 'HOLD' }
+}
+`;
+}
+
+// ---[ Pinia Store: Centralized strategy management ]---
+const strategyStore = useStrategyStore()
+
+// ---[ State: Strategy code (from store) and deployment status (from store) ]---
+const strategyCode = computed({
+  get: () => strategyStore.currentStrategyCode || getDefaultStrategyTemplate(),
+  set: (val: string) => strategyStore.setCurrentStrategyCode(val)
+})
+const isDeploying = computed(() => strategyStore.isDeploying)
+const error = computed(() => strategyStore.error)
+
+// ---[ Monaco Editor options ]---
 const editorOptions: editor.IStandaloneEditorConstructionOptions = {
   language: 'JavaScript',
   lineNumbers: 'on', // Allowed: 'on', 'off', 'relative', 'interval'
@@ -67,51 +98,34 @@ const editorOptions: editor.IStandaloneEditorConstructionOptions = {
   theme: 'vs-dark',
 }
 
-// Editor change handler
+// ---[ Editor change handler ]---
 function onEditorChange(value: string) {
   strategyCode.value = value
 }
 
-// Actions
+// ---[ Actions: Load template, save, deploy (via store) ]---
 const loadTemplate = () => {
-  strategyCode.value = defaultTemplate
+  strategyStore.setCurrentStrategyCode(getDefaultStrategyTemplate())
 }
 
 const saveStrategy = async () => {
-  try {
-    await $fetch('/api/trading-bot/strategies', {
-      method: 'POST',
-      body: {
-        name: `Strategy_${Date.now()}`,
-        code: strategyCode.value,
-        language: 'javascript'
-      }
-    })
-    console.log('Strategy saved successfully')
-  } catch (error) {
-    console.error('Failed to save strategy:', error)
-  }
+  await strategyStore.saveStrategy({
+    name: `Strategy_${Date.now()}`,
+    code: strategyCode.value,
+    language: 'Typescript'
+  })
 }
 
 const deployStrategy = async () => {
-  try {
-    isDeploying.value = true
-    await $fetch('/api/trading-bot/deploy', {
-      method: 'POST',
-      body: {
-        code: strategyCode.value,
-        config: {
-          instruments: ['EUR_USD', 'GBP_USD'],
-          riskPerTrade: 0.01,
-          maxPositions: 2
-        }
-      }
-    })
-    console.log('Strategy deployed successfully')
-  } catch (error) {
-    console.error('Failed to deploy strategy:', error)
-  } finally {
-    isDeploying.value = false
-  }
+  await strategyStore.deployStrategy({
+    code: strategyCode.value,
+    config: {
+      instruments: ['EUR_USD', 'GBP_USD'],
+      riskPerTrade: 0.01,
+      maxPositions: 2
+    }
+  })
 }
+
+// ---[ TODO: Integrate Pinia store for strategies and deployment status if needed ]---
 </script>
