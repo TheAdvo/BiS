@@ -14,13 +14,20 @@ import ActiveStrategiesPanel from '@/components/TradingBot/ActiveStrategiesPanel
 import SimplifiedMarketAnalysis from '@/components/TradingBot/SimplifiedMarketAnalysis.vue'
 import BotQuickStats from '@/components/TradingBot/BotQuickStats.vue'
 
+
 import { useOandaStore } from '~/stores/oanda'
+
+// Format balance with thousands separators and two decimals
+function formatBalance(balance: number | string) {
+  const num = typeof balance === 'number' ? balance : parseFloat(balance)
+  if (isNaN(num)) return balance
+  return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 
 // Use Pinia OANDA store
 const oanda = useOandaStore()
 const refreshAll = oanda.refreshAll
-const refreshAccount = oanda.refreshAccount
 const startAutoRefresh = useOandaAutoRefresh().start
 
 // SEO Meta Tags
@@ -61,7 +68,7 @@ onMounted(async () => {
           <span class="font-bold">Account:</span>
           <span>{{ oanda.getAccount.accountID }}</span>
           <span class="font-bold">Balance:</span>
-          <span>{{ oanda.getAccount.balance }} {{ oanda.getAccount.currency }}</span>
+          <span>{{ formatBalance(oanda.getAccount.balance) }} {{ oanda.getAccount.currency }}</span>
         </div>
       </template>
     </div>
@@ -73,18 +80,18 @@ onMounted(async () => {
       <!-- Left side - Strategy Editor & Management (5 columns) -->
       <div class="xl:col-span-5 space-y-2">
         <StrategyScriptEditor />
-        <BotManagementPanel />
       </div>
 
       <!-- Center - Market Analysis & Performance (4 columns) -->
-      <div class="xl:col-span-4 space-y-6">
-        <SimplifiedMarketAnalysis />
-        <BotPerformanceMonitor />
+      <div class="xl:col-span-4 space-y-2">
+        <BotManagementPanel />
+        <ActiveStrategiesPanel />
       </div>
 
       <!-- Right side - Active Bots & Control (3 columns) -->
-      <div class="xl:col-span-3">
-        <ActiveStrategiesPanel />
+      <div class="xl:col-span-3 space-y-2">
+        <SimplifiedMarketAnalysis />
+        <BotPerformanceMonitor />
       </div>
     </div>
   </div>
