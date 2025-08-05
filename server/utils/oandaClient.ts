@@ -16,6 +16,73 @@ interface OandaApiOptions {
 }
 
 class OandaApiClient {
+  /**
+   * Place a market order with optional take profit and stop loss (in pips)
+   * @param order { instrument, units, type, takeProfit?, stopLoss? }
+   * @returns OANDA API order response
+   */
+  async placeOrder(order: { instrument: string; units: number; type: string; takeProfit?: number; stopLoss?: number }) {
+    // Fetch current price for TP/SL calculation if needed
+    // OANDA expects TP/SL as price, not pips, so we must convert
+    let tpPrice, slPrice
+    if (order.takeProfit || order.stopLoss) {
+      // Get current price for instrument
+      const pricing: any = await this.getPricing([order.instrument])
+      const pricesArr = Array.isArray(pricing?.prices) ? pricing.prices : []
+      const priceObj = pricesArr[0] || {}
+      const current = priceObj.closeoutAsk || (priceObj.asks && priceObj.asks[0]?.price) || (priceObj.bids && priceObj.bids[0]?.price)
+      const currentPrice = parseFloat(current)
+      // Determine pip size (e.g., 0.0001 for EUR/USD)
+      const pip = order.instrument.includes('JPY') ? 0.01 : 0.0001
+      if (order.takeProfit && order.takeProfit > 0) {
+        tpPrice = order.units > 0
+          ? (currentPrice + order.takeProfit * pip)
+          : (currentPrice - order.takeProfit * pip)
+        tpPrice = tpPrice.toFixed(5)
+      }
+      if (order.stopLoss && order.stopLoss > 0) {
+        slPrice = order.units > 0
+          ? (currentPrice - order.stopLoss * pip)
+          : (currentPrice + order.stopLoss * pip)
+        slPrice = slPrice.toFixed(5)
+      }
+    }
+
+    // Build OANDA order payload
+    const payload: any = {
+      order: {
+        instrument: order.instrument,
+        units: order.units.toString(),
+        type: order.type.toUpperCase(),
+        positionFill: 'DEFAULT',
+      }
+    }
+    if (tpPrice) {
+      payload.order.takeProfitOnFill = { price: tpPrice }
+    }
+    if (slPrice) {
+      payload.order.stopLossOnFill = { price: slPrice }
+    }
+
+    // POST to OANDA
+    const endpoint = `/accounts/${this.config.accountId}/orders`
+    const response = await fetch(`${this.config.apiUrl}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.config.apiKey}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'ADVOAI-Trading-Engine/1.0'
+      },
+      body: JSON.stringify(payload)
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      this.logger.error('OANDA order error', data)
+      throw createError({ statusCode: response.status, statusMessage: data.errorMessage || 'OANDA order failed' })
+    }
+    this.logger.info('OANDA order placed', data)
+    return data
+  }
   private config: OandaConfig
   private logger = createServerLogger('OANDA')
 

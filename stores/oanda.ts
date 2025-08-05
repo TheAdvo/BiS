@@ -195,6 +195,42 @@ export const useOandaStore = defineStore('oanda', {
       }
     },
 
+
+    /**
+     * Place a market order via the OANDA API
+     * @param order { instrument: string, units: number, side: 'buy' | 'sell', takeProfit?: number, stopLoss?: number }
+     * @returns The order response from the backend
+     * Usage: await store.placeOrder({ instrument: 'EUR_USD', units: 1000, side: 'buy', takeProfit: 20, stopLoss: 10 })
+     */
+    async placeOrder(order: { instrument: string; units: number; side: 'buy' | 'sell'; takeProfit?: number; stopLoss?: number }) {
+      try {
+        // Map 'side' to OANDA units (positive for buy, negative for sell)
+        const units = order.side === 'buy' ? Math.abs(order.units) : -Math.abs(order.units)
+        // Build order body
+        const body: any = {
+          instrument: order.instrument,
+          units,
+          type: 'MARKET'
+        }
+        if (order.takeProfit && order.takeProfit > 0) body.takeProfit = order.takeProfit
+        if (order.stopLoss && order.stopLoss > 0) body.stopLoss = order.stopLoss
+
+        const response = await $fetch('/api/oanda/order', {
+          method: 'POST',
+          body
+        })
+        // Optionally refresh trades/positions after placing an order
+        await Promise.all([
+          this.refreshTrades(true),
+          this.refreshPositions(true)
+        ])
+        return response
+      } catch (error) {
+        console.error('Order placement failed:', error)
+        throw error
+      }
+    },
+
     // Clear all caches
     // ---[ Utility: Clears all cached data and resets refresh timers ]---
     clearCache() {

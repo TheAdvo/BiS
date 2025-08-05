@@ -25,27 +25,7 @@ const items = [
     title: "Bot Engine",
     url: "/dashboard",
     icon: LayoutDashboard,
-  },
-  {
-    title: "Positions",
-    url: "/positions",
-    icon: Briefcase,
-  },
-  {
-    title: "Trades",
-    url: "/trades",
-    icon: TrendingUp,
-  },
-  {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
+  }
 ]
 </script>
 

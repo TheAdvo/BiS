@@ -111,13 +111,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Quick Actions -->
-      <div class="border-t pt-3 flex-shrink-0">
-        <Button variant="outline" size="sm" class="w-full text-xs h-8" @click="$router.push('/analytics')">
-          View Detailed Analysis
-        </Button>
-      </div>
     </CardContent>
   </Card>
 </template>

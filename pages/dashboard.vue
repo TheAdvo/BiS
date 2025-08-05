@@ -7,10 +7,7 @@ definePageMeta({
 import { onMounted } from 'vue'
 
 // Import trading bot components directly
-import BotManagementPanel from '@/components/TradingBot/BotManagementPanel.vue'
 import StrategyScriptEditor from '@/components/TradingBot/StrategyScriptEditor.vue'
-import BotPerformanceMonitor from '@/components/TradingBot/BotPerformanceMonitor.vue'
-import ActiveStrategiesPanel from '@/components/TradingBot/ActiveStrategiesPanel.vue'
 import SimplifiedMarketAnalysis from '@/components/TradingBot/SimplifiedMarketAnalysis.vue'
 import BotQuickStats from '@/components/TradingBot/BotQuickStats.vue'
 
@@ -80,18 +77,17 @@ onMounted(async () => {
       <!-- Left side - Strategy Editor & Management (5 columns) -->
       <div class="xl:col-span-5 space-y-2">
         <StrategyScriptEditor />
+        <TradingBotSmaCrossoverBot />
       </div>
 
       <!-- Center - Market Analysis & Performance (4 columns) -->
       <div class="xl:col-span-4 space-y-2">
-        <BotManagementPanel />
-        <ActiveStrategiesPanel />
+
       </div>
 
       <!-- Right side - Active Bots & Control (3 columns) -->
       <div class="xl:col-span-3 space-y-2">
         <SimplifiedMarketAnalysis />
-        <BotPerformanceMonitor />
       </div>
     </div>
   </div>
