@@ -67,8 +67,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
-// Get OANDA account data
-const { data: accountData, pending: accountPending, error: accountError } = useOandaAccount()
+import { useAccountStore } from '@/stores/account'
+import { storeToRefs } from 'pinia'
+const accountStore = useAccountStore()
+const { id, balance, currency, positions, loading, error } = storeToRefs(accountStore)
+const fetchAccount = accountStore.fetchAccount
+onMounted(() => { fetchAccount() })
 
 // Reactive state
 const unreadNotifications = ref(0) // Start with 0, will be populated from real data
@@ -108,15 +112,11 @@ const updateMarketStatus = () => {
 
 // Computed properties for account data
 const accountTypeText = computed(() => {
-  if (accountPending.value) return 'Loading...'
-  if (accountError.value) return 'Error'
-  if (!accountData.value) return 'No Account'
-
-  // Determine if it's a live or demo account based on account alias or ID
-  const alias = accountData.value.alias?.toLowerCase() || ''
-  const accountId = accountData.value.accountID || ''
-
-  if (alias.includes('live') || accountId.includes('001')) {
+  if (loading.value) return 'Loading...'
+  if (error.value) return 'Error'
+  if (!id.value) return 'No Account'
+  // You may want to add logic for live/demo based on id or another field
+  if (id.value.includes('001')) {
     return 'Live Account'
   } else {
     return 'Demo Account'
@@ -124,16 +124,16 @@ const accountTypeText = computed(() => {
 })
 
 const accountStatusText = computed(() => {
-  if (accountPending.value) return 'Connecting...'
-  if (accountError.value) return 'Disconnected'
-  if (!accountData.value) return 'Disconnected'
+  if (loading.value) return 'Connecting...'
+  if (error.value) return 'Disconnected'
+  if (!id.value) return 'Disconnected'
   return 'Connected'
 })
 
 const accountStatusColor = computed(() => {
-  if (accountPending.value) return 'text-yellow-600'
-  if (accountError.value) return 'text-red-600'
-  if (!accountData.value) return 'text-red-600'
+  if (loading.value) return 'text-yellow-600'
+  if (error.value) return 'text-red-600'
+  if (!id.value) return 'text-red-600'
   return 'text-green-600'
 })
 
@@ -146,14 +146,10 @@ const marketBadgeColor = computed(() => {
 })
 
 const accountTypeIndicator = computed(() => {
-  if (accountPending.value) return 'Loading'
-  if (accountError.value) return 'Error'
-  if (!accountData.value) return 'Offline'
-
-  const alias = accountData.value.alias?.toLowerCase() || ''
-  const accountId = accountData.value.accountID || ''
-
-  if (alias.includes('live') || accountId.includes('001')) {
+  if (loading.value) return 'Loading'
+  if (error.value) return 'Error'
+  if (!id.value) return 'Offline'
+  if (id.value.includes('001')) {
     return 'Live'
   } else {
     return 'Demo'
@@ -161,14 +157,10 @@ const accountTypeIndicator = computed(() => {
 })
 
 const accountTypeIndicatorColor = computed(() => {
-  if (accountPending.value) return 'bg-yellow-500'
-  if (accountError.value) return 'bg-red-600'
-  if (!accountData.value) return 'bg-gray-500'
-
-  const alias = accountData.value.alias?.toLowerCase() || ''
-  const accountId = accountData.value.accountID || ''
-
-  if (alias.includes('live') || accountId.includes('001')) {
+  if (loading.value) return 'bg-yellow-500'
+  if (error.value) return 'bg-red-600'
+  if (!id.value) return 'bg-gray-500'
+  if (id.value.includes('001')) {
     return 'bg-green-600' // Live account - green
   } else {
     return 'bg-blue-500' // Demo account - blue
@@ -178,31 +170,19 @@ const accountTypeIndicatorColor = computed(() => {
 // Actions
 const toggleNotifications = () => {
   const logger = useLogger()
-
   if (unreadNotifications.value > 0) {
     // Provide context-aware notification messages
     const messages = []
-
-    if (accountData.value?.openTradeCount && accountData.value.openTradeCount > 0) {
-      messages.push(`${accountData.value.openTradeCount} open trade(s)`)
+    // You may want to add openTradeCount, pendingOrderCount, pl to the store if needed
+    if (positions.value && positions.value.length > 0) {
+      messages.push(`${positions.value.length} open position(s)`)
     }
-
-    if (accountData.value?.pendingOrderCount && accountData.value.pendingOrderCount > 0) {
-      messages.push(`${accountData.value.pendingOrderCount} pending order(s)`)
-    }
-
-    const pl = parseFloat(accountData.value?.pl || '0')
-    if (Math.abs(pl) > 100) {
-      const plFormatted = pl >= 0 ? `+$${pl.toFixed(2)}` : `-$${Math.abs(pl).toFixed(2)}`
-      messages.push(`P&L: ${plFormatted}`)
-    }
-
+    // Add more notification logic as needed
     if (messages.length > 0) {
       logger.info('Notifications', `Trading alerts: ${messages.join(', ')}`)
     } else {
       logger.info('Notifications', 'Trading activity detected')
     }
-
     unreadNotifications.value = Math.max(0, unreadNotifications.value - 1)
   } else {
     logger.info('Notifications', 'No new notifications')
@@ -219,28 +199,9 @@ onMounted(() => {
 })
 
 // Watch for account data changes to update notifications
-watch(() => accountData.value, (newAccountData) => {
-  if (newAccountData) {
-    // Set notifications based on actual trading activity
-    let notifications = 0
-
-    // Add notification for each open trade
-    if (newAccountData.openTradeCount > 0) {
-      notifications += newAccountData.openTradeCount
-    }
-
-    // Add notification for pending orders
-    if (newAccountData.pendingOrderCount > 0) {
-      notifications += newAccountData.pendingOrderCount
-    }
-
-    // Add notification if P&L is significantly positive or negative
-    const pl = parseFloat(newAccountData.pl || '0')
-    if (Math.abs(pl) > 100) { // If P&L is more than $100
-      notifications += 1
-    }
-
-    unreadNotifications.value = Math.min(notifications, 9) // Cap at 9 for display
+watch(() => positions.value, (newPositions) => {
+  if (newPositions) {
+    unreadNotifications.value = Math.min(newPositions.length, 9)
   }
 }, { immediate: true })
 

@@ -1,5 +1,5 @@
 <template>
-  <Card class="h-[400px] flex flex-col">
+  <Card class="h-[460px] flex flex-col">
     <CardHeader class="pb-2 flex-shrink-0">
       <CardTitle class="text-base font-medium flex items-center gap-2">
         <TrendingUp class="w-4 h-4" />
@@ -116,22 +116,42 @@
 </template>
 
 <script setup lang="ts">
+// ---
+// MarketOverview.vue
+//
+// Composables and Stores Used:
+// - useTradingSignals (from @/composables/useTradingSignals):
+//     Provides activeSignals, used for signal counts and recent signals display.
+// - useOandaStore (Pinia store, from @/stores/oanda):
+//     Provides getCandlesData and getPricingData for fetching OANDA market data.
+// - useDebounceFn (from @vueuse/core):
+//     Used for debounced currency data fetching.
+//
+// This component displays a live market overview, including:
+// - Market sentiment (bullish/bearish/neutral)
+// - Active trading signals
+// - Current price and price change
+// - Quick technical indicators (RSI, MACD, Trend)
+// - Recent signals
+//
+// All data is fetched via composables and Pinia stores, following project conventions.
+// ---
+
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
+import { useDebounceFn } from '@vueuse/core' // Debounced async fetching
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectItemText, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TrendingUp, RefreshCw, ArrowUp, ArrowDown } from 'lucide-vue-next'
 import type { PriceMessage, OandaCandlesResponse } from '@/types/Oanda'
+import { useOandaStore } from '@/stores/oanda' // Centralized OANDA Pinia store
+import { useTradingSignals } from '@/composables/useTradingSignals' // Trading signals composable
 
-// Import Pinia store for centralized OANDA data
-import { useOandaStore } from '@/stores/oanda'
-
-// Currency selection
+// --- Currency selection state ---
 const selectedCurrency = ref('EUR_USD')
 
-// Available currency pairs
+// --- Available currency pairs (major/minor) ---
 const majorPairs = [
   { value: 'EUR_USD', label: 'EUR/USD' },
   { value: 'GBP_USD', label: 'GBP/USD' },
@@ -151,23 +171,26 @@ const minorPairs = [
   { value: 'EUR_CHF', label: 'EUR/CHF' }
 ]
 
-// Reactive data refs
+// --- Reactive data refs for market/pricing data ---
 const pricingData = ref<{ prices: PriceMessage[] } | null>(null)
 const candleData = ref<OandaCandlesResponse | null>(null)
+
+// --- Trading signals composable ---
+// Provides activeSignals (array of current signals)
 const { activeSignals } = useTradingSignals()
 
-// Use centralized OANDA store instead of multiple API calls
+// --- Centralized OANDA store methods ---
+// Used for all market data fetching
 const { getCandlesData, getPricingData } = useOandaStore()
 
-// Fetch data for current currency using the centralized store
+// --- Fetch data for the selected currency ---
+// Uses Pinia store methods for pricing and candles
 const fetchCurrencyData = async (currency: string) => {
   try {
-    // Use store methods instead of direct $fetch calls
     const [pricingResponse, candleResponse] = await Promise.all([
       getPricingData(currency),
       getCandlesData(currency, 'M5', 50)
     ])
-
     pricingData.value = pricingResponse
     candleData.value = candleResponse
   } catch (error) {
@@ -175,22 +198,23 @@ const fetchCurrencyData = async (currency: string) => {
   }
 }
 
-// Watch for currency changes and fetch new data with debouncing
+// --- Watch for currency changes and fetch new data with debouncing ---
 const debouncedFetch = useDebounceFn(fetchCurrencyData, 300)
 watch(selectedCurrency, async (newCurrency) => {
   await debouncedFetch(newCurrency)
 }, { immediate: true })
 
-// Get display label for selected currency
+// --- Get display label for selected currency ---
 const selectedCurrencyLabel = computed(() => {
   const allPairs = [...majorPairs, ...minorPairs]
   const pair = allPairs.find(p => p.value === selectedCurrency.value)
   return pair?.label || selectedCurrency.value
 })
 
+// --- Loading state for refresh button ---
 const loading = ref(false)
 
-// Simplified market sentiment calculation
+// --- Simplified market sentiment calculation (last 10 candles) ---
 const sentiment = computed(() => {
   if (!candleData.value?.candles || candleData.value.candles.length < 10) {
     return { type: 'neutral', label: 'Neutral', value: 50 }
@@ -216,7 +240,7 @@ const sentiment = computed(() => {
   return { type: 'neutral', label: 'Neutral', value: bullishPercent }
 })
 
-// Current price and change
+// --- Current price and price change calculations ---
 const currentPrice = computed(() => {
   if (!pricingData.value?.prices || pricingData.value.prices.length === 0) return '1.0000'
   const price = pricingData.value.prices[0]
@@ -252,7 +276,8 @@ const priceChangePercent = computed(() => {
   return '0.00'
 })
 
-// Simplified technical indicators (memoized for performance)
+// --- Simplified technical indicators (RSI, MACD, Trend) ---
+// All calculated from last N candles for performance
 const rsi = computed(() => {
   if (!candleData.value?.candles || candleData.value.candles.length < 14) return 50
 
@@ -319,17 +344,17 @@ const trend = computed(() => {
   return 'neutral'
 })
 
-// Active signals count
+// --- Active signals count (from useTradingSignals) ---
 const activeSignalsCount = computed(() => {
   return activeSignals.value?.length || 0
 })
 
-// Recent signals (simplified)
+// --- Recent signals (from useTradingSignals) ---
 const recentSignals = computed(() => {
   return activeSignals.value?.slice(0, 3) || []
 })
 
-// Refresh data
+// --- Manual refresh for all data (used by refresh button) ---
 const refreshData = async () => {
   loading.value = true
   try {
@@ -340,7 +365,5 @@ const refreshData = async () => {
   }
 }
 
-// Auto-refresh with smarter interval (reduce frequency when not in focus)
-
-// Auto-refresh is now managed by dashboard or parent - no individual interval needed
+// --- Auto-refresh is now managed by dashboard or parent - no individual interval needed ---
 </script>

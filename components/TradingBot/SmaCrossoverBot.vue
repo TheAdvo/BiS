@@ -1,56 +1,117 @@
 <template>
-  <div class="w-full max-w-md mx-auto p-4 bg-card rounded shadow">
-    <h2 class="text-lg font-bold mb-2 flex items-center gap-2">
-      <span>SMA Crossover Bot</span>
-      <span v-if="isTrading" class="text-green-500 text-xs">● Live</span>
-    </h2>
-    <div class="mb-4 flex flex-wrap gap-2 items-center">
-      <label class="text-xs">Instrument:</label>
-      <select v-model="instrument" class="border rounded px-2 py-1 text-xs">
-        <option v-for="inst in availableInstruments" :key="inst" :value="inst">{{ inst }}</option>
-      </select>
-      <label class="text-xs ml-2">Fast SMA:</label>
-      <input v-model.number="fastPeriod" type="number" min="2" max="50" class="w-12 border rounded px-1 text-xs" />
-      <label class="text-xs ml-2">Slow SMA:</label>
-      <input v-model.number="slowPeriod" type="number" min="3" max="100" class="w-12 border rounded px-1 text-xs" />
-      <label class="text-xs ml-2">Trade Size:</label>
-      <input v-model.number="tradeSize" type="number" min="1" step="1" class="w-16 border rounded px-1 text-xs" />
-      <label class="text-xs ml-2">TP (pips):</label>
-      <input v-model.number="takeProfit" type="number" min="0" step="1" class="w-14 border rounded px-1 text-xs" />
-      <label class="text-xs ml-2">SL (pips):</label>
-      <input v-model.number="stopLoss" type="number" min="0" step="1" class="w-14 border rounded px-1 text-xs" />
-    </div>
-    <div class="mb-2 flex items-center gap-2">
-      <button class="btn btn-sm" :class="isTrading ? 'bg-red-500 text-white' : 'bg-green-500 text-white'" @click="toggleTrading">
-        {{ isTrading ? 'Stop' : 'Start' }} Bot
-      </button>
-      <span v-if="tradeStatus" class="text-xs" :class="tradeStatus.startsWith('Error') ? 'text-red-500' : 'text-green-600'">{{ tradeStatus }}</span>
-    </div>
-    <div class="mb-2 text-xs">
-      <span>Fast SMA: <b>{{ fastSMA !== undefined && fastSMA !== null ? fastSMA.toFixed(5) : '-' }}</b></span> |
-      <span>Slow SMA: <b>{{ slowSMA !== undefined && slowSMA !== null ? slowSMA.toFixed(5) : '-' }}</b></span>
-    </div>
-    <div class="mb-2 text-xs">
-      <span>Signal: <b :class="signal === 'buy' ? 'text-green-600' : signal === 'sell' ? 'text-red-600' : 'text-muted-foreground'">{{ signal || '-' }}</b></span>
-    </div>
-    <div class="mb-2 text-xs">
-      <span>Current Position: <b>{{ positionStatus }}</b></span>
-    </div>
-    <div class="text-xs text-muted-foreground">Last trade: {{ lastTrade || '-' }}</div>
-  </div>
+  <Card class="w-full max-w-md mx-auto p-4">
+    <CardHeader class="pb-2">
+      <CardTitle class="text-lg font-bold flex items-center gap-2">
+        <span>SMA Crossover Bot</span>
+        <Badge v-if="isTrading" variant="default" class="text-xs px-2 py-0.5">● Live</Badge>
+      </CardTitle>
+    </CardHeader>
+    <CardContent class="flex flex-col gap-2">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-2">
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">Instrument</Label>
+          <Select v-model="instrument">
+            <SelectTrigger class="w-full h-8 text-xs">
+              <SelectValue :placeholder="instrument" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="inst in availableInstruments" :key="inst" :value="inst">
+                <SelectItemText>{{ inst }}</SelectItemText>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">Fast SMA</Label>
+          <NumberField v-model="fastPeriod" :min="2" :max="50" class="w-full text-xs" :disabled="isTrading">
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+        </div>
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">Slow SMA</Label>
+          <NumberField v-model="slowPeriod" :min="3" :max="100" class="w-full text-xs" :disabled="isTrading">
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+        </div>
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">Trade Size</Label>
+          <NumberField v-model="tradeSize" :min="1" :step="1" class="w-full text-xs" :disabled="isTrading">
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+        </div>
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">TP (pips)</Label>
+          <NumberField v-model="takeProfitSafe" :min="0" :step="1" class="w-full text-xs" :disabled="isTrading">
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+        </div>
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">SL (pips)</Label>
+          <NumberField v-model="stopLossSafe" :min="0" :step="1" class="w-full text-xs" :disabled="isTrading">
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <Button size="sm" :variant="isTrading ? 'destructive' : 'default'" @click="toggleTrading">
+          {{ isTrading ? 'Stop' : 'Start' }} Bot
+        </Button>
+        <span v-if="tradeStatus" class="text-xs" :class="tradeStatus.startsWith('Error') ? 'text-destructive' : 'text-success'">{{ tradeStatus }}</span>
+      </div>
+      <div class="text-xs">
+        <span>Fast SMA: <b>{{ fastSMA !== undefined && fastSMA !== null ? fastSMA.toFixed(5) : '-' }}</b></span> |
+        <span>Slow SMA: <b>{{ slowSMA !== undefined && slowSMA !== null ? slowSMA.toFixed(5) : '-' }}</b></span>
+      </div>
+      <div class="text-xs">
+        <span>Signal: <b :class="signal === 'buy' ? 'text-success' : signal === 'sell' ? 'text-destructive' : 'text-muted-foreground'">{{ signal || '-' }}</b></span>
+      </div>
+      <div class="text-xs">
+        <span>Current Position: <b>{{ positionStatus }}</b></span>
+      </div>
+      <div class="text-xs text-muted-foreground">Last trade: {{ lastTrade || '-' }}</div>
+    </CardContent>
+  </Card>
 </template>
 
 <script setup lang="ts">
+
 /**
  * SMA Crossover Bot Component
  * - Uses useOandaCandles for candle data and SMA calculation
  * - Uses useOandaStore for trade execution
  * - Detects SMA crossovers and places trades accordingly
+ * - Uses shadcn-vue UI components for all controls and status
  * - Minimal, well-documented, and type-safe
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useOandaCandles } from '@/composables/useOandaCandles'
 import { useOandaStore } from '@/stores/oanda'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { NumberField } from '@/components/ui/number-field'
+import { Label } from '@/components/ui/label'
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectItemText, SelectValue } from '@/components/ui/select'
 
 // --- Configurable instruments and SMA periods ---
 const availableInstruments = [
@@ -67,6 +128,15 @@ const lastTrade = ref('')
 const tradeSize = ref(1000)
 const takeProfit = ref<number | null>(null)
 const stopLoss = ref<number | null>(null)
+// Safe values for shadcn-vue Input (never null)
+const takeProfitSafe = computed({
+  get: () => takeProfit.value ?? 0,
+  set: v => takeProfit.value = v
+})
+const stopLossSafe = computed({
+  get: () => stopLoss.value ?? 0,
+  set: v => stopLoss.value = v
+})
 let interval: ReturnType<typeof setInterval> | null = null
 
 // --- OANDA store and candle data ---
