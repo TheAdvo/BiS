@@ -20,6 +20,15 @@
               </SelectItem>
             </SelectContent>
           </Select>
+          <span class="text-xs mt-1 text-muted-foreground">
+            Live Price: <b>
+              {{
+                price && price.bids?.[0]?.price && price.asks?.[0]?.price
+                  ? ((parseFloat(price.bids[0].price) + parseFloat(price.asks[0].price)) / 2).toFixed(5)
+                  : '-'
+              }}
+            </b>
+          </span>
         </div>
         <div class="flex flex-col">
           <Label class="text-xs mb-1">Fast SMA</Label>
@@ -77,6 +86,7 @@
           {{ isTrading ? 'Stop' : 'Start' }} Bot
         </Button>
         <span v-if="tradeStatus" class="text-xs" :class="tradeStatus.startsWith('Error') ? 'text-destructive' : 'text-success'">{{ tradeStatus }}</span>
+        <span v-else>No status yet</span>
       </div>
       <div class="text-xs">
         <span>Fast SMA: <b>{{ fastSMA !== undefined && fastSMA !== null ? fastSMA.toFixed(5) : '-' }}</b></span> |
@@ -88,7 +98,7 @@
       <div class="text-xs">
         <span>Current Position: <b>{{ positionStatus }}</b></span>
       </div>
-      <div class="text-xs text-muted-foreground">Last trade: {{ lastTrade || '-' }}</div>
+      <div class="text-xs text-muted-foreground">Last trade: {{ lastTrade || 'No Trades Placed' }}</div>
     </CardContent>
   </Card>
 </template>
@@ -105,6 +115,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useOandaCandles } from '@/composables/useOandaCandles'
+import { useOandaPricing } from '@/composables/useOandaPricing'
 import { useOandaStore } from '@/stores/oanda'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -139,9 +150,13 @@ const stopLossSafe = computed({
 })
 let interval: ReturnType<typeof setInterval> | null = null
 
+// --- Live pricing subscription ---
+const { price, subscribe, unsubscribe } = useOandaPricing(instrument)
+
 // --- OANDA store and candle data ---
 const oanda = useOandaStore()
-const { candles, calculateSMA, refresh } = useOandaCandles(instrument.value, 'M5', 100)
+// Pass the latest price to useOandaCandles if supported (for fastest updates)
+const { candles, calculateSMA, refresh } = useOandaCandles(instrument.value, 'M5', 100, price)
 
 // --- Position management ---
 import { computed as vueComputed } from 'vue'
@@ -260,8 +275,17 @@ watch([instrument, fastPeriod, slowPeriod], () => {
 // --- Lifecycle: Initial refresh and cleanup ---
 onMounted(() => {
   refresh()
+  subscribe()
 })
 onUnmounted(() => {
   if (interval) clearInterval(interval)
+  unsubscribe()
+})
+
+// --- Reactivity: Refresh candles and check trade on live price update ---
+watch(price, async () => {
+  // If useOandaCandles supports injecting the latest price, this will ensure the bot logic is always using the freshest tick
+  await refresh()
+  if (isTrading.value) await checkAndTrade()
 })
 </script>

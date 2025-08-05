@@ -48,7 +48,7 @@ interface MarketStructure {
   }
 }
 
-export const useOandaCandles = (instrument: string, granularity: string = 'M5', count: number = 500) => {
+export const useOandaCandles = (instrument: string, granularity: string = 'M5', count: number = 500, livePrice?: any) => {
   const { data, pending, error, refresh } = useAsyncData<OandaCandlesResponse>(
     `oanda-candles-${instrument}-${granularity}-${count}`,
     async () => {
@@ -63,12 +63,29 @@ export const useOandaCandles = (instrument: string, granularity: string = 'M5', 
     }
   )
 
-  const candles = computed(() => data.value?.candles || [])
+  // If livePrice is provided, append a synthetic candle for calculations
+  const candles = computed(() => {
+    const base = data.value?.candles ? [...data.value.candles] : []
+    if (livePrice && livePrice.value && livePrice.value.bids?.[0]?.price && livePrice.value.asks?.[0]?.price) {
+      // Use mid price for close, open, high, low
+      const bid = parseFloat(livePrice.value.bids[0].price)
+      const ask = parseFloat(livePrice.value.asks[0].price)
+      const mid = (bid + ask) / 2
+      base.push({
+        complete: false,
+        mid: { o: mid.toString(), h: mid.toString(), l: mid.toString(), c: mid.toString() },
+        volume: 0,
+        time: new Date().toISOString()
+      })
+    }
+    return base
+  })
 
   // Enhanced price extraction with validation
   const getOHLCData = () => {
+    // Accept incomplete (synthetic) candle if present
     return candles.value
-      .filter(candle => candle.complete && candle.mid?.o && candle.mid?.h && candle.mid?.l && candle.mid?.c)
+      .filter(candle => candle.mid?.o && candle.mid?.h && candle.mid?.l && candle.mid?.c)
       .map(candle => ({
         open: parseFloat(candle.mid!.o),
         high: parseFloat(candle.mid!.h),
@@ -81,22 +98,23 @@ export const useOandaCandles = (instrument: string, granularity: string = 'M5', 
 
   // Helper to get close prices for calculations
   const getClosePrices = (): number[] => {
+    // Accept incomplete (synthetic) candle if present
     return candles.value
-      .filter(candle => candle.complete && candle.mid?.c)
+      .filter(candle => candle.mid?.c)
       .map(candle => parseFloat(candle.mid!.c))
   }
 
   // Helper to get high prices
   const getHighPrices = (): number[] => {
     return candles.value
-      .filter(candle => candle.complete && candle.mid?.h)
+      .filter(candle => candle.mid?.h)
       .map(candle => parseFloat(candle.mid!.h))
   }
 
   // Helper to get low prices
   const getLowPrices = (): number[] => {
     return candles.value
-      .filter(candle => candle.complete && candle.mid?.l)
+      .filter(candle => candle.mid?.l)
       .map(candle => parseFloat(candle.mid!.l))
   }
 
