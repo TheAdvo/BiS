@@ -9,6 +9,19 @@
     <CardContent class="flex flex-col gap-2">
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-2">
         <div class="flex flex-col">
+          <Label class="text-xs mb-1">Granularity</Label>
+          <Select v-model="granularity">
+            <SelectTrigger class="w-full h-8 text-xs">
+              <SelectValue :placeholder="granularity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="g in availableGranularities" :key="g" :value="g">
+                <SelectItemText>{{ g }}</SelectItemText>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="flex flex-col">
           <Label class="text-xs mb-1">Instrument</Label>
           <Select v-model="instrument">
             <SelectTrigger class="w-full h-8 text-xs">
@@ -124,11 +137,15 @@ import { NumberField } from '@/components/ui/number-field'
 import { Label } from '@/components/ui/label'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectItemText, SelectValue } from '@/components/ui/select'
 
-// --- Configurable instruments and SMA periods ---
+// --- Configurable instruments, SMA periods, and granularity ---
 const availableInstruments = [
   'EUR_USD', 'GBP_USD', 'USD_JPY', 'AUD_USD', 'USD_CAD', 'USD_CHF', 'NZD_USD', 'XAU_USD'
 ]
+const availableGranularities = [
+  'M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D', 'W'
+]
 const instrument = ref('EUR_USD')
+const granularity = ref('M1')
 const fastPeriod = ref(9)
 const slowPeriod = ref(21)
 
@@ -156,7 +173,7 @@ const { price, subscribe, unsubscribe } = useOandaPricing(instrument)
 // --- OANDA store and candle data ---
 const oanda = useOandaStore()
 // Pass the latest price to useOandaCandles if supported (for fastest updates)
-const { candles, calculateSMA, refresh } = useOandaCandles(instrument.value, 'M5', 100, price)
+const { candles, calculateSMA, refresh } = useOandaCandles(instrument.value, granularity.value, 100, price)
 
 // --- Position management ---
 import { computed as vueComputed } from 'vue'
@@ -268,7 +285,7 @@ const toggleTrading = () => {
 }
 
 // --- Reactivity: Refresh candles on param change ---
-watch([instrument, fastPeriod, slowPeriod], () => {
+watch([instrument, fastPeriod, slowPeriod, granularity], () => {
   refresh()
 })
 

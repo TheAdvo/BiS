@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Run Nuxt Dev Server",
+			"command": "npx nuxt dev",
+			"group": "build",
+			"isBackground": true
+		}
+	]
+}
