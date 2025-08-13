@@ -7,20 +7,20 @@
             <Code class="w-4 h-4" />
             <span>Strategy Script Editor</span>
             <Badge variant="outline" class="text-xs">
-              <div class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1"></div>
+              <div class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1"/>
               TypeScript
             </Badge>
           </CardTitle>
           <div class="flex items-center gap-2">
-            <Button variant="outline" size="sm" @click="loadTemplate" aria-label="Load template">
+            <Button variant="outline" size="sm" aria-label="Load template" @click="loadTemplate">
               <FileText class="w-3 h-3 mr-1" />
               Template
             </Button>
-            <Button variant="outline" size="sm" @click="saveStrategy" :disabled="!strategyCode.trim()" aria-label="Save strategy">
+            <Button variant="outline" size="sm" :disabled="!strategyCode.trim()" aria-label="Save strategy" @click="saveStrategy">
               <Save class="w-3 h-3 mr-1" />
               Save
             </Button>
-            <Button size="sm" @click="deployStrategy" :disabled="!strategyCode.trim() || isDeploying" aria-label="Deploy strategy">
+            <Button size="sm" :disabled="!strategyCode.trim() || isDeploying" aria-label="Deploy strategy" @click="deployStrategy">
               <Play class="w-3 h-3 mr-1" />
               <span v-if="isDeploying">
                 <span class="animate-spin mr-1">⏳</span>
@@ -34,7 +34,7 @@
       <CardContent class="p-0 flex-1">
         <div class="h-full w-full">
           <ClientOnly>
-            <MonacoEditor v-model="strategyCode" lang="typescript" :options="editorOptions" @change="onEditorChange" style="height: 100%;" />
+            <MonacoEditor v-model="strategyCode" lang="typescript" :options="editorOptions" style="height: 100%;" @change="onEditorChange" />
           </ClientOnly>
         </div>
       </CardContent>

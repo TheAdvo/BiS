@@ -27,7 +27,7 @@
             <!-- Simple chart visualization -->
             <div class="flex-1 bg-accent/20 rounded-lg border-2 border-dashed border-border p-4">
               <div class="h-full flex items-end justify-between gap-1">
-                <div v-for="(point, index) in normalizedData" :key="index" class="flex-1 bg-primary/60 rounded-t-sm transition-all hover:bg-primary" :style="{ height: `${point.height}%` }" :title="`${new Date(point.timestamp).toLocaleDateString()}: ${formatCurrency(point.balance)}`"></div>
+                <div v-for="(point, index) in normalizedData" :key="index" class="flex-1 bg-primary/60 rounded-t-sm transition-all hover:bg-primary" :style="{ height: `${point.height}%` }" :title="`${new Date(point.timestamp).toLocaleDateString()}: ${formatCurrency(point.balance)}`"/>
               </div>
             </div>
 

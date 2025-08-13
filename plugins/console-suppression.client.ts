@@ -1,6 +1,6 @@
 // plugins/console-suppression.client.ts
 export default defineNuxtPlugin(() => {
-  if (process.dev) {
+  if (import.meta.dev) {
     const originalWarn = console.warn
     const originalLog = console.log
     const originalInfo = console.info

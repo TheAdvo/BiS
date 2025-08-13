@@ -68,7 +68,7 @@ const items = [
         <template #fallback>
           <div class="flex items-center justify-center py-12">
             <div class="text-center">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"/>
               <p class="text-muted-foreground">Loading...</p>
             </div>
           </div>

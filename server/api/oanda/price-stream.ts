@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
     event.res.write(`event: status\ndata: ${JSON.stringify({ status: 'connected', instruments })}\n\n`)
     res.on('data', (chunk) => {
       buffer += chunk
-      let lines = buffer.split('\n')
+      const lines = buffer.split('\n')
       buffer = lines.pop() || ''
       for (const line of lines) {
         if (line.trim()) {

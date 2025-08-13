@@ -1,9 +1,5 @@
 <script setup lang="ts">
 // Use the dashboard layout
-definePageMeta({
-  layout: 'dashboard'
-})
-
 import { onMounted } from 'vue'
 
 // Import trading bot components directly
@@ -12,6 +8,10 @@ import MarketOverview from '~/components/TradingBot/MarketOverview.vue'
 import BotQuickStats from '@/components/TradingBot/BotQuickStats.vue'
 import { useAccountStore } from '@/stores/account'
 import { storeToRefs } from 'pinia'
+
+definePageMeta({
+  layout: 'dashboard'
+})
 
 
 // Format balance with thousands separators and two decimals
@@ -37,8 +37,7 @@ useHead({
 })
 
 onMounted(async () => {
-  const logger = useLogger()
-  logger.info('Trading Bot Engine loaded', 'Welcome to ADVOAI Bot Dashboard')
+  const logger = useLogger();
   await fetchAccount()
 })
 </script>
@@ -68,7 +67,9 @@ onMounted(async () => {
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full">
       <!-- Left side - Strategy Editor & Management (5 columns) -->
       <div class="xl:col-span-5 space-y-2">
-        <StrategyScriptEditor />
+        <ClientOnly>
+          <StrategyScriptEditor />
+        </ClientOnly>
       </div>
 
       <!-- Center - Market Analysis & Performance (4 columns) -->

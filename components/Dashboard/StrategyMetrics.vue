@@ -53,7 +53,7 @@
                   </span>
                 </div>
                 <div class="w-full bg-muted rounded-full h-2">
-                  <div class="h-2 rounded-full transition-all duration-500" :class="strategy.performance >= 0 ? 'bg-green-500' : 'bg-red-500'" :style="{ width: `${Math.min(Math.abs(strategy.performance) * 2, 100)}%` }"></div>
+                  <div class="h-2 rounded-full transition-all duration-500" :class="strategy.performance >= 0 ? 'bg-green-500' : 'bg-red-500'" :style="{ width: `${Math.min(Math.abs(strategy.performance) * 2, 100)}%` }"/>
                 </div>
               </div>
             </div>
@@ -68,7 +68,7 @@
                 <span class="text-green-500">45%</span>
               </div>
               <div class="w-full bg-muted rounded-full h-1.5">
-                <div class="w-[45%] h-1.5 bg-green-500 rounded-full"></div>
+                <div class="w-[45%] h-1.5 bg-green-500 rounded-full"/>
               </div>
 
               <div class="flex items-center justify-between text-xs">
@@ -76,7 +76,7 @@
                 <span class="text-yellow-500">35%</span>
               </div>
               <div class="w-full bg-muted rounded-full h-1.5">
-                <div class="w-[35%] h-1.5 bg-yellow-500 rounded-full"></div>
+                <div class="w-[35%] h-1.5 bg-yellow-500 rounded-full"/>
               </div>
 
               <div class="flex items-center justify-between text-xs">
@@ -84,7 +84,7 @@
                 <span class="text-red-500">20%</span>
               </div>
               <div class="w-full bg-muted rounded-full h-1.5">
-                <div class="w-[20%] h-1.5 bg-red-500 rounded-full"></div>
+                <div class="w-[20%] h-1.5 bg-red-500 rounded-full"/>
               </div>
             </div>
           </div>

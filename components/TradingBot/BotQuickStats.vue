@@ -62,7 +62,7 @@
         <div class="flex items-center gap-2">
           <div class="text-2xl font-bold">{{ stats.apiLatency }}ms</div>
           <Badge variant="outline" class="text-xs">
-            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'"></div>
+            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'"/>
             {{ accountError || tradesError || positionsError ? 'Error' : 'Connected' }}
           </Badge>
         </div>
@@ -80,7 +80,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-2">
-              <div class="w-2 h-2 rounded-full animate-pulse" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'"></div>
+              <div class="w-2 h-2 rounded-full animate-pulse" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'"/>
               <span class="text-sm font-medium">
                 {{ accountError || tradesError || positionsError ? 'Trading Engine Error' : 'Trading Engine Online' }}
               </span>
@@ -108,7 +108,7 @@
               <span class="text-muted-foreground">Margin Used:</span>
               <span class="ml-1">${{ accountData ? parseFloat(accountData.marginUsed).toFixed(2) : '--' }}</span>
             </div>
-            <Button variant="outline" size="sm" @click="refreshStats" :disabled="isRefreshing">
+            <Button variant="outline" size="sm" :disabled="isRefreshing" @click="refreshStats">
               <RefreshCw class="w-3 h-3 mr-1" :class="{ 'animate-spin': isRefreshing }" />
               Refresh
             </Button>
@@ -196,7 +196,7 @@ const stats = computed(() => {
   const positions = positionsData.value?.positions || []
 
   // Debug logging
-  if (process.client) {
+  if (import.meta.client) {
     console.log('BotQuickStats - Account data:', account)
     console.log('BotQuickStats - Trades data:', trades)
     console.log('BotQuickStats - Positions data:', positions)

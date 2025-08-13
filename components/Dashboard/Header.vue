@@ -6,7 +6,7 @@
         <SidebarTrigger />
         <h1 class="text-xl font-semibold">Trading Bot Engine</h1>
         <div class="flex items-center gap-2">
-          <div class="w-2 h-2 rounded-full" :class="accountTypeIndicatorColor"></div>
+          <div class="w-2 h-2 rounded-full" :class="accountTypeIndicatorColor"/>
           <span class="text-sm text-muted-foreground">{{ accountTypeIndicator }}</span>
         </div>
       </div>
@@ -17,7 +17,7 @@
         <div class="flex items-center gap-2 text-sm">
           <span class="text-muted-foreground">Bots:</span>
           <Badge variant="outline" class="text-xs">
-            <div class="w-1.5 h-1.5 rounded-full mr-1 bg-green-500"></div>
+            <div class="w-1.5 h-1.5 rounded-full mr-1 bg-green-500"/>
             Active
           </Badge>
         </div>
@@ -26,7 +26,7 @@
         <div class="flex items-center gap-2 text-sm">
           <span class="text-muted-foreground">Markets:</span>
           <Badge variant="outline" class="text-xs">
-            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="marketBadgeColor"></div>
+            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="marketBadgeColor"/>
             {{ marketBadgeText }}
           </Badge>
         </div>

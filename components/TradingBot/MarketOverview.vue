@@ -5,7 +5,7 @@
         <TrendingUp class="w-4 h-4" />
         <span>Market Overview</span>
         <Badge variant="outline" class="text-xs">
-          <div class="w-1.5 h-1.5 bg-green-600 rounded-full mr-1 animate-pulse"></div>
+          <div class="w-1.5 h-1.5 bg-green-600 rounded-full mr-1 animate-pulse"/>
           Live
         </Badge>
       </CardTitle>
@@ -55,7 +55,7 @@
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Button variant="ghost" size="sm" @click="refreshData" :disabled="loading" class="h-6 w-6 p-0">
+          <Button variant="ghost" size="sm" :disabled="loading" class="h-6 w-6 p-0" @click="refreshData">
             <RefreshCw :class="{ 'animate-spin': loading }" class="w-3 h-3" />
           </Button>
         </div>

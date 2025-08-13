@@ -137,6 +137,9 @@ import { NumberField } from '@/components/ui/number-field'
 import { Label } from '@/components/ui/label'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectItemText, SelectValue } from '@/components/ui/select'
 
+// --- Position management ---
+import { computed as vueComputed } from 'vue'
+
 // --- Configurable instruments, SMA periods, and granularity ---
 const availableInstruments = [
   'EUR_USD', 'GBP_USD', 'USD_JPY', 'AUD_USD', 'USD_CAD', 'USD_CHF', 'NZD_USD', 'XAU_USD'
@@ -174,9 +177,6 @@ const { price, subscribe, unsubscribe } = useOandaPricing(instrument)
 const oanda = useOandaStore()
 // Pass the latest price to useOandaCandles if supported (for fastest updates)
 const { candles, calculateSMA, refresh } = useOandaCandles(instrument.value, granularity.value, 100, price)
-
-// --- Position management ---
-import { computed as vueComputed } from 'vue'
 const positions = vueComputed(() => {
   // OANDA store positions shape: { positions: OandaPosition[] }
   return oanda.getPositions?.positions || []

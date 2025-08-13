@@ -7,7 +7,7 @@
             <Briefcase class="w-4 h-4" />
             <span>Open Positions</span>
             <Badge variant="outline" class="text-xs">
-              <div class="w-1.5 h-1.5 rounded-full mr-1" :class="pricingPending ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'"></div>
+              <div class="w-1.5 h-1.5 rounded-full mr-1" :class="pricingPending ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'"/>
               {{ pricingPending ? 'Updating' : 'Live' }}
             </Badge>
           </CardTitle>
