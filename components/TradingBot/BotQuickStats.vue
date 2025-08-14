@@ -62,7 +62,7 @@
         <div class="flex items-center gap-2">
           <div class="text-2xl font-bold">{{ stats.apiLatency }}ms</div>
           <Badge variant="outline" class="text-xs">
-            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'"/>
+            <div class="w-1.5 h-1.5 rounded-full mr-1" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'" />
             {{ accountError || tradesError || positionsError ? 'Error' : 'Connected' }}
           </Badge>
         </div>
@@ -80,7 +80,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-2">
-              <div class="w-2 h-2 rounded-full animate-pulse" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'"/>
+              <div class="w-2 h-2 rounded-full animate-pulse" :class="accountError || tradesError || positionsError ? 'bg-red-500' : 'bg-green-500'" />
               <span class="text-sm font-medium">
                 {{ accountError || tradesError || positionsError ? 'Trading Engine Error' : 'Trading Engine Online' }}
               </span>
@@ -194,13 +194,6 @@ const stats = computed(() => {
   const account = accountData.value
   const trades = tradesData.value?.trades || []
   const positions = positionsData.value?.positions || []
-
-  // Debug logging
-  if (import.meta.client) {
-    console.log('BotQuickStats - Account data:', account)
-    console.log('BotQuickStats - Trades data:', trades)
-    console.log('BotQuickStats - Positions data:', positions)
-  }
 
   return {
     // Real data from OANDA

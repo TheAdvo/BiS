@@ -1,4 +1,7 @@
 import pino from "pino";
+import dotenv from "dotenv";
+dotenv.config();
+const LOGGING_ENABLED = process.env.LOGGING_ENABLED === "true";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -21,6 +24,7 @@ export const log = (
   context?: Record<string, any>,
   debugEnabled?: boolean
 ) => {
+  if (!LOGGING_ENABLED) return;
   const timestamp = new Date().toISOString();
   if (level === "debug" && !debugEnabled) return;
   logger[level]({ timestamp, message, ...context });

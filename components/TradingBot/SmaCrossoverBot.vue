@@ -111,6 +111,20 @@
       <div class="text-xs">
         <span>Current Position: <b>{{ positionStatus }}</b></span>
       </div>
+      <div class="text-xs mt-2">
+        <span class="font-semibold">Open Trades for {{ instrument }}:</span>
+        <ul v-if="openTrades.length" class="list-disc ml-4">
+          <li v-for="trade in openTrades" :key="trade.instrument">
+            <span>
+              {{ trade.instrument }} -
+              <span v-if="parseFloat(trade.long?.units || '0') > 0">Long ({{ trade.long.units }})</span>
+              <span v-else-if="parseFloat(trade.short?.units || '0') < 0">Short ({{ trade.short.units }})</span>
+              <span v-else>Flat</span>
+            </span>
+          </li>
+        </ul>
+        <span v-else class="text-muted-foreground">No open trades for {{ instrument }}</span>
+      </div>
       <div class="text-xs text-muted-foreground">Last trade: {{ lastTrade || 'No Trades Placed' }}</div>
     </CardContent>
   </Card>
@@ -147,7 +161,7 @@ const availableInstruments = [
 const availableGranularities = [
   'M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D', 'W'
 ]
-const instrument = ref('EUR_USD')
+const instrument = ref('GBP_USD')
 const granularity = ref('M1')
 const fastPeriod = ref(9)
 const slowPeriod = ref(21)
@@ -159,6 +173,7 @@ const lastTrade = ref('')
 const tradeSize = ref(1000)
 const takeProfit = ref<number | null>(null)
 const stopLoss = ref<number | null>(null)
+const fifoViolated = ref(false)
 // Safe values for shadcn-vue Input (never null)
 const takeProfitSafe = computed({
   get: () => takeProfit.value ?? 0,
@@ -175,11 +190,21 @@ const { price, subscribe, unsubscribe } = useOandaPricing(instrument)
 
 // --- OANDA store and candle data ---
 const oanda = useOandaStore()
-// Pass the latest price to useOandaCandles if supported (for fastest updates)
-const { candles, calculateSMA, refresh } = useOandaCandles(instrument.value, granularity.value, 100, price)
+// Pass instrument.value and granularity.value so useOandaCandles receives strings
+const { candles, calculateSMA, refresh } = useOandaCandles(instrument, granularity, 100, price)
+
+
 const positions = vueComputed(() => {
   // OANDA store positions shape: { positions: OandaPosition[] }
   return oanda.getPositions?.positions || []
+})
+
+// All open trades for selected instrument
+const openTrades = computed(() => {
+  return positions.value.filter((p: any) => p.instrument === instrument.value && (
+    parseFloat(p.long?.units || '0') !== 0 ||
+    parseFloat(p.short?.units || '0') !== 0
+  ))
 })
 
 const currentPosition = vueComputed(() => {
@@ -211,13 +236,24 @@ const signal = computed(() => {
     .filter(c => c.mid && typeof c.mid.c === 'string')
     .map(c => parseFloat(c.mid!.c))
   if (closes.length < Math.max(fastPeriod.value, slowPeriod.value) + 2) return null
-  // Calculate previous SMAs for last candle
-  const prevFast = calculateSMA(fastPeriod.value)
-  const prevSlow = calculateSMA(slowPeriod.value)
+  // Calculate previous SMAs using previous candle set
+  // Remove the last candle for previous SMA calculation
+  const prevCloses = closes.slice(0, -1)
+  // Helper to calculate SMA from closes array
+  const sma = (arr: number[], period: number) => {
+    if (arr.length < period) return null
+    return arr.slice(-period).reduce((a, b) => a + b, 0) / period
+  }
+  const prevFast = sma(prevCloses, fastPeriod.value)
+  const prevSlow = sma(prevCloses, slowPeriod.value)
   if (prevFast == null || prevSlow == null) return null
-  // Simple crossover logic (current vs previous)
-  if (prevFast > prevSlow && fastSMA.value <= slowSMA.value) return 'sell'
-  if (prevFast < prevSlow && fastSMA.value >= slowSMA.value) return 'buy'
+  // Current SMAs
+  const currFast = sma(closes, fastPeriod.value)
+  const currSlow = sma(closes, slowPeriod.value)
+  if (currFast == null || currSlow == null) return null
+  // True crossover detection
+  if (prevFast < prevSlow && currFast >= currSlow) return 'buy'
+  if (prevFast > prevSlow && currFast <= currSlow) return 'sell'
   return null
 })
 
@@ -229,9 +265,27 @@ const checkAndTrade = async () => {
   await refresh()
   await oanda.refreshPositions?.()
   if (!isTrading.value || !signal.value) return
-  // Prevent duplicate trades in same direction
-  const longUnits = parseFloat(currentPosition.value?.long?.units || '0')
-  const shortUnits = parseFloat(currentPosition.value?.short?.units || '0')
+  // Detect if FIFO violation is currently active
+  const hasOpenPosition = currentPosition.value && (
+    parseFloat(currentPosition.value.long?.units || '0') !== 0 ||
+    parseFloat(currentPosition.value.short?.units || '0') !== 0
+  )
+  if (fifoViolated.value) {
+    // If violation is active, check if position is now closed
+    if (!hasOpenPosition) {
+      fifoViolated.value = false
+      tradeStatus.value = 'FIFO violation resolved. Bot resumed.'
+    } else {
+      tradeStatus.value = 'FIFO violation: Open position exists. No further trades until resolved.'
+      return
+    }
+  }
+  // If not violated, but open position exists, set violation
+  if (hasOpenPosition) {
+    tradeStatus.value = 'FIFO violation: Open position exists. No further trades until resolved.'
+    fifoViolated.value = true
+    return
+  }
   try {
     // Prepare order object with optional TP/SL
     const orderBase = {
@@ -243,22 +297,10 @@ const checkAndTrade = async () => {
     if (takeProfit.value && takeProfit.value > 0) order.takeProfit = takeProfit.value
     if (stopLoss.value && stopLoss.value > 0) order.stopLoss = stopLoss.value
 
-    if (signal.value === 'buy' && typeof oanda.placeOrder === 'function') {
-      if (longUnits > 0) {
-        tradeStatus.value = 'Already in long position'
-        return
-      }
+    if (typeof oanda.placeOrder === 'function') {
       await oanda.placeOrder(order)
-      tradeStatus.value = 'Buy order placed'
-      lastTrade.value = `Buy @ ${new Date().toLocaleTimeString()}`
-    } else if (signal.value === 'sell' && typeof oanda.placeOrder === 'function') {
-      if (shortUnits < 0) {
-        tradeStatus.value = 'Already in short position'
-        return
-      }
-      await oanda.placeOrder(order)
-      tradeStatus.value = 'Sell order placed'
-      lastTrade.value = `Sell @ ${new Date().toLocaleTimeString()}`
+      tradeStatus.value = `${signal.value === 'buy' ? 'Buy' : 'Sell'} order placed`
+      lastTrade.value = `${signal.value === 'buy' ? 'Buy' : 'Sell'} @ ${new Date().toLocaleTimeString()}`
     } else {
       tradeStatus.value = 'Error: placeOrder not implemented'
     }
@@ -275,6 +317,8 @@ const checkAndTrade = async () => {
 const toggleTrading = () => {
   isTrading.value = !isTrading.value
   tradeStatus.value = isTrading.value ? 'Bot started' : 'Bot stopped'
+  // Reset FIFO violation when toggling bot off
+  if (!isTrading.value) fifoViolated.value = false
   if (isTrading.value) {
     checkAndTrade()
     interval = setInterval(checkAndTrade, 60 * 1000)

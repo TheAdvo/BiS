@@ -35,7 +35,14 @@ class OandaApiClient {
     }
 
     this.config = { apiKey, accountId, apiUrl };
-    this.debugEnabled = true; // Initialize debugEnabled
+    // Read debug flag from .env (OANDA_DEBUG or DEBUG)
+    const envDebug = process.env.OANDA_DEBUG ?? process.env.DEBUG;
+    this.debugEnabled = envDebug === "true" || envDebug === "1";
+    logDebug(
+      "OandaApiClient debugEnabled",
+      { debugEnabled: this.debugEnabled },
+      this.debugEnabled
+    );
   }
 
   async request<T>(
@@ -47,7 +54,7 @@ class OandaApiClient {
       cacheTTL = 30000,
       retries = 3,
       timeout = 10000,
-      debug = false, // Disable/Enable debug logging for this request
+      debug = this.debugEnabled, // Disable/Enable debug logging for this request
     } = options;
 
     const url = `${this.config.apiUrl}${endpoint}`;
