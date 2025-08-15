@@ -76,6 +76,7 @@ onMounted(async () => {
       <div class="xl:col-span-4 space-y-2">
         <TradingBotSmaCrossoverBot />
         <TradingBotMeanReversionBot />
+        <TradingBotATRTrendBot />
       </div>
 
       <!-- Right side - Active Bots & Control (3 columns) -->

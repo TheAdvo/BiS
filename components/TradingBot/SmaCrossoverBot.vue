@@ -93,6 +93,17 @@
             </NumberFieldContent>
           </NumberField>
         </div>
+        <div class="flex flex-col">
+          <Label class="text-xs mb-1">ATR Period</Label>
+          <NumberField v-model="atrPeriod" :min="5" :max="50" class="w-full text-xs" :disabled="isTrading">
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+          <span class="text-xs mt-1 text-muted-foreground">ATR: <b>{{ atrValue !== undefined && atrValue !== null ? atrValue.toFixed(5) : '-' }}</b></span>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <Button size="sm" :variant="isTrading ? 'destructive' : 'default'" @click="toggleTrading">
@@ -161,7 +172,7 @@ const availableInstruments = [
 const availableGranularities = [
   'M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D', 'W'
 ]
-const instrument = ref('GBP_USD')
+const instrument = ref('EUR_USD')
 const granularity = ref('M1')
 const fastPeriod = ref(9)
 const slowPeriod = ref(21)
@@ -191,7 +202,7 @@ const { price, subscribe, unsubscribe } = useOandaPricing(instrument)
 // --- OANDA store and candle data ---
 const oanda = useOandaStore()
 // Pass instrument.value and granularity.value so useOandaCandles receives strings
-const { candles, calculateSMA, refresh } = useOandaCandles(instrument, granularity, 100, price)
+const { candles, calculateSMA, calculateATR, refresh } = useOandaCandles(instrument, granularity, 100, price)
 
 
 const positions = vueComputed(() => {
@@ -224,6 +235,18 @@ const positionStatus = vueComputed(() => {
 // --- SMA values ---
 const fastSMA = computed(() => calculateSMA(fastPeriod.value))
 const slowSMA = computed(() => calculateSMA(slowPeriod.value))
+
+// ATR is now available for strategy logic, e.g.:
+// Use atrValue.value for dynamic stop loss, take profit, or position sizing if desired
+const atrPeriod = ref(14)
+const atrValue = computed(() => calculateATR(atrPeriod.value))
+
+// --- ATR-based dynamic risk management ---
+const riskMultiplierLong = ref(2) // SL = 2 * ATR for longs
+const rewardMultiplierLong = ref(3) // TP = 3 * ATR for longs
+const riskMultiplierShort = ref(2.5) // SL = 2.5 * ATR for shorts
+const rewardMultiplierShort = ref(2) // TP = 2 * ATR for shorts
+const basePositionSize = ref(1000) // Base size for position sizing
 
 /**
  * Detect SMA crossover signal
@@ -287,20 +310,46 @@ const checkAndTrade = async () => {
     return
   }
   try {
-    // Prepare order object with optional TP/SL
+    let units = basePositionSize.value
+    let side = signal.value as 'buy' | 'sell'
+    let stopLossValue = 0
+    let takeProfitValue = 0
+    // ATR-based dynamic risk management
+    if (atrValue.value && atrValue.value > 0) {
+      if (side === 'buy') {
+        stopLossValue = riskMultiplierLong.value * atrValue.value
+        takeProfitValue = rewardMultiplierLong.value * atrValue.value
+        units = Math.floor(basePositionSize.value / atrValue.value)
+      } else {
+        stopLossValue = riskMultiplierShort.value * atrValue.value
+        takeProfitValue = rewardMultiplierShort.value * atrValue.value
+        units = -Math.floor(basePositionSize.value / atrValue.value)
+      }
+    } else {
+      // Fallback to base values if ATR is not available
+      if (side === 'buy') {
+        stopLossValue = stopLoss.value ?? 0
+        takeProfitValue = takeProfit.value ?? 0
+        units = basePositionSize.value
+      } else {
+        stopLossValue = 0
+        takeProfitValue = 0
+        units = -basePositionSize.value
+      }
+    }
     const orderBase = {
       instrument: instrument.value,
-      units: tradeSize.value,
-      side: signal.value as 'buy' | 'sell'
+      units,
+      side
     }
     const order: any = { ...orderBase }
-    if (takeProfit.value && takeProfit.value > 0) order.takeProfit = takeProfit.value
-    if (stopLoss.value && stopLoss.value > 0) order.stopLoss = stopLoss.value
+    if (takeProfitValue && takeProfitValue > 0) order.takeProfit = takeProfitValue
+    if (stopLossValue && stopLossValue > 0) order.stopLoss = stopLossValue
 
     if (typeof oanda.placeOrder === 'function') {
       await oanda.placeOrder(order)
-      tradeStatus.value = `${signal.value === 'buy' ? 'Buy' : 'Sell'} order placed`
-      lastTrade.value = `${signal.value === 'buy' ? 'Buy' : 'Sell'} @ ${new Date().toLocaleTimeString()}`
+      tradeStatus.value = `${side === 'buy' ? 'Buy' : 'Sell'} order placed`
+      lastTrade.value = `${side === 'buy' ? 'Buy' : 'Sell'} @ ${new Date().toLocaleTimeString()}`
     } else {
       tradeStatus.value = 'Error: placeOrder not implemented'
     }

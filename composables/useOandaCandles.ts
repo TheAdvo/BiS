@@ -706,16 +706,16 @@ export const useOandaCandles = (
     const highs = getHighPrices();
     const lows = getLowPrices();
 
+    const minLength = period + 1;
     if (
-      closes.length < period + 1 ||
-      highs.length < period + 1 ||
-      lows.length < period + 1
+      closes.length < minLength ||
+      highs.length < minLength ||
+      lows.length < minLength
     ) {
       return null;
     }
 
     const trueRanges: number[] = [];
-
     for (
       let i = 1;
       i < Math.min(closes.length, highs.length, lows.length);
@@ -735,8 +735,16 @@ export const useOandaCandles = (
 
     if (trueRanges.length < period) return null;
 
-    const recentTR = trueRanges.slice(-period);
-    return recentTR.reduce((sum, tr) => sum + tr, 0) / period;
+    // Traditional ATR uses Wilder's smoothing (exponential moving average)
+    const multiplier = 1 / period;
+    let atr =
+      trueRanges.slice(0, period).reduce((sum, tr) => sum + tr, 0) / period;
+
+    for (let i = period; i < trueRanges.length; i++) {
+      atr = trueRanges[i] * multiplier + atr * (1 - multiplier);
+    }
+
+    return atr;
   };
 
   return {
