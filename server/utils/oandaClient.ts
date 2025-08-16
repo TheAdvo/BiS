@@ -1,6 +1,7 @@
 // server/utils/oandaClient.ts
 import { serverCache } from "./cache";
 import { debug as logDebug, error as logError } from "./logger";
+import { createError } from "h3";
 
 interface OandaConfig {
   apiKey: string;
@@ -399,7 +400,7 @@ class OandaApiClient {
     return data;
   }
 
-  invalidateCache(pattern?: string) {
+  invalidateCache(pattern?: string): void {
     if (pattern) {
       logDebug(`Cache invalidated`, { pattern }, this.debugEnabled);
       serverCache.invalidate(`oanda:${pattern}`);

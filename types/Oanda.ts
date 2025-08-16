@@ -1,6 +1,15 @@
 /**
  * Represents an OANDA trading account with balance and position information
  */
+/**
+ * OANDA candlestick data for technical analysis
+ */
+/**
+ * Response structure for OANDA candles API endpoint
+ */
+/**
+ * Represents an OANDA trading account with balance and position information
+ */
 export interface OandaAccount {
   /** Current account balance in account currency */
   balance: string;
@@ -68,7 +77,7 @@ export type PriceMessage = {
   asks: Array<{ price: string }>;
   /** ISO timestamp of when the price was generated */
   time: string;
-}
+};
 
 /**
  * OANDA trading instrument details and trading constraints
@@ -176,7 +185,7 @@ export interface OandaTrade {
   /** Margin required for this trade */
   marginUsed: string;
   /** Trade side (BUY/SELL derived from units) */
-  side?: 'BUY' | 'SELL';
+  side?: "BUY" | "SELL";
 }
 
 /**

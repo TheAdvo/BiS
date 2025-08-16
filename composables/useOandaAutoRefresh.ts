@@ -1,68 +1,75 @@
-import { useOandaStore } from "~/stores/oanda"
+import { useOandaStore } from "~/stores/oanda";
 
+export interface UseOandaAutoRefreshReturn {
+  start: () => void;
+  stop: () => void;
+  isActive: import("vue").Ref<boolean>;
+}
 // composables/useOandaAutoRefresh.ts - Centralized auto-refresh service
 export const useOandaAutoRefresh = () => {
-  const { refreshAll } = useOandaStore()
+  const { refreshAll } = useOandaStore();
 
-  let refreshInterval: NodeJS.Timeout | null = null
-  let visibilityHandler: (() => void) | null = null
-  const isActive = ref(false)
+  let refreshInterval: NodeJS.Timeout | null = null;
+  let visibilityHandler: (() => void) | null = null;
+  const isActive = ref(false);
 
   // Configurable refresh frequencies
   const config = {
-    normalInterval: 30000,    // 30 seconds when page is visible
-    backgroundInterval: 120000 // 2 minutes when page is hidden
-  }
+    normalInterval: 30000, // 30 seconds when page is visible
+    backgroundInterval: 120000, // 2 minutes when page is hidden
+  };
 
   const start = () => {
-    if (refreshInterval) return // Already running
+    if (refreshInterval) return; // Already running
 
-    isActive.value = true
+    isActive.value = true;
 
     const setupInterval = () => {
-      const interval = document.hidden ? config.backgroundInterval : config.normalInterval
+      const interval = document.hidden
+        ? config.backgroundInterval
+        : config.normalInterval;
 
-      if (refreshInterval) clearInterval(refreshInterval)
+      if (refreshInterval) clearInterval(refreshInterval);
 
       refreshInterval = setInterval(() => {
         if (!document.hidden) {
-          refreshAll() // Don't force refresh on auto-refresh
+          refreshAll(); // Don't force refresh on auto-refresh
         }
-      }, interval)
-    }
+      }, interval);
+    };
 
     // Store handler reference for cleanup
-    visibilityHandler = setupInterval
+    visibilityHandler = setupInterval;
 
     // Initial setup
-    setupInterval()
+    setupInterval();
 
     // Adjust interval based on page visibility
-    document.addEventListener('visibilitychange', visibilityHandler)
-  }
+    document.addEventListener("visibilitychange", visibilityHandler);
+  };
 
   const stop = () => {
     if (refreshInterval) {
-      clearInterval(refreshInterval)
-      refreshInterval = null
+      clearInterval(refreshInterval);
+      refreshInterval = null;
     }
 
     if (visibilityHandler) {
-      document.removeEventListener('visibilitychange', visibilityHandler)
-      visibilityHandler = null
+      document.removeEventListener("visibilitychange", visibilityHandler);
+      visibilityHandler = null;
     }
 
-    isActive.value = false
-  }
+    isActive.value = false;
+  };
 
   // Auto-cleanup on unmount
   onUnmounted(() => {
-    stop()
-  })
+    stop();
+  });
 
   return {
     start,
     stop,
-    isActive: readonly(isActive)
-  }
-}
+    isActive: readonly(isActive),
+  };
+};

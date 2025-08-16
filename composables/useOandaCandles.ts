@@ -1,5 +1,5 @@
 // composables/useOandaCandles.ts
-import { ref, watch, computed, type Ref } from "vue";
+import { ref, watch, computed, type Ref, onScopeDispose } from "vue";
 import type { OandaCandlesResponse, OandaCandle } from "@/types/Oanda";
 
 // Advanced technical analysis interface
@@ -54,13 +54,30 @@ interface MarketStructure {
   };
 }
 
+export interface UseOandaCandlesReturn {
+  data: any;
+  candles: any;
+  pending: any;
+  error: any;
+  refresh: () => Promise<void>;
+  // extraction helpers
+  getOHLCData: () => any;
+  getClosePrices: () => number[];
+  // indicators (partial)
+  calculateSMA: (period: number) => number | null;
+}
 export const useOandaCandles = (
   instrument: Ref<string>,
   granularity: Ref<string>,
   count: number = 500,
   livePrice?: any
 ) => {
-  const { data, pending, error, refresh } = useAsyncData<OandaCandlesResponse>(
+  const {
+    data,
+    pending,
+    error,
+    refresh: useAsyncRefresh,
+  } = useAsyncData<OandaCandlesResponse>(
     () => `oanda-candles-${instrument.value}-${granularity.value}-${count}`,
     async () => {
       const response = await $fetch<OandaCandlesResponse>(
@@ -82,8 +99,53 @@ export const useOandaCandles = (
   );
 
   // Watch for changes and refresh automatically
+  let controller: AbortController | null = null;
+
+  const fetchCandles = async () => {
+    // Abort previous request
+    controller?.abort();
+    controller = new AbortController();
+
+    // set pending manually to show activity while we fetch
+    pending.value = true;
+    error.value = null;
+
+    try {
+      const response = await $fetch<OandaCandlesResponse>(
+        "/api/oanda/candles",
+        {
+          query: {
+            instrument: instrument.value,
+            granularity: granularity.value,
+            count,
+          },
+          signal: controller.signal,
+        }
+      );
+
+      // assign into the async-data ref so consumers keep using the same ref
+      data.value = response;
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      error.value = err;
+    } finally {
+      pending.value = false;
+    }
+  };
+
   watch([instrument, granularity], () => {
-    refresh();
+    // use our abortable fetch for live refreshes
+    void fetchCandles();
+  });
+
+  // expose a refresh that uses our abortable fetch, falling back to useAsyncData's refresh
+  const refresh = async () => {
+    return fetchCandles();
+  };
+
+  // Cleanup on unmount / scope disposal
+  onScopeDispose(() => {
+    controller?.abort();
   });
 
   // If livePrice is provided, append a synthetic candle for calculations

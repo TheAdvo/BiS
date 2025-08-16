@@ -1,5 +1,5 @@
 // composables/useOandaPricing.ts
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onScopeDispose } from "vue";
 import type { PriceMessage } from "@/types/Oanda";
 
 /**
@@ -11,6 +11,14 @@ import type { PriceMessage } from "@/types/Oanda";
  *
  * KISS: Simple, robust, and well-commented
  */
+export interface UseOandaPricingReturn {
+  price: import("vue").Ref<any | null>;
+  pending: import("vue").Ref<boolean>;
+  error: import("vue").Ref<string | null>;
+  subscribe: () => void;
+  unsubscribe: () => void;
+}
+
 export function useOandaPricing(instrumentRef: any) {
   // Instrument can be a ref or string
   const instrument = computed(() =>
@@ -68,6 +76,11 @@ export function useOandaPricing(instrumentRef: any) {
   // Auto-resubscribe when instrument changes
   watch(instrument, () => {
     subscribe();
+  });
+
+  // Ensure we cleanup the EventSource when the consumer unmounts
+  onScopeDispose(() => {
+    unsubscribe();
   });
 
   // Return reactive state and controls
