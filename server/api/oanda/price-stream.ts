@@ -114,9 +114,15 @@ export default defineEventHandler(async (event) => {
           if (data.type === "PRICE") {
             event.res.write(`data: ${JSON.stringify(data)}\n\n`);
           } else if (data.type === "HEARTBEAT") {
+            // Forward heartbeat to client and log it for observability (controlled by LOGGING_ENABLED)
             event.res.write(
               `event: heartbeat\ndata: ${JSON.stringify(data)}\n\n`
             );
+            try {
+              logger.info("heartbeat", data);
+            } catch (e) {
+              // Don't fail the stream for logging errors
+            }
           }
         } catch (err: any) {
           const errorMsg = err instanceof Error ? err.message : String(err);

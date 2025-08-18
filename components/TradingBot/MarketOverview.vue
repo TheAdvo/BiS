@@ -5,7 +5,7 @@
         <TrendingUp class="w-4 h-4" />
         <span>Market Overview</span>
         <Badge variant="outline" class="text-xs">
-          <div class="w-1.5 h-1.5 bg-green-600 rounded-full mr-1 animate-pulse"/>
+          <div class="w-1.5 h-1.5 bg-green-600 rounded-full mr-1 animate-pulse" />
           Live
         </Badge>
       </CardTitle>
@@ -34,11 +34,12 @@
       </div>
 
       <!-- Current Price & Change -->
-      <div class="border-t pt-3">
+      <Separator class="my-2" />
+      <div class="pt-1">
         <div class="flex items-center justify-between mb-1">
           <Select v-model="selectedCurrency">
-            <SelectTrigger class="w-[120px] h-7 text-sm">
-              <SelectValue :placeholder="selectedCurrency" />
+            <SelectTrigger aria-label="Choose currency pair" class="w-[120px] h-7 text-sm">
+              <SelectValue :placeholder="!selectedCurrency ? 'Select pair' : undefined" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
@@ -55,12 +56,15 @@
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Button variant="ghost" size="sm" :disabled="loading" class="h-6 w-6 p-0" @click="refreshData">
-            <RefreshCw :class="{ 'animate-spin': loading }" class="w-3 h-3" />
-          </Button>
+          <div class="flex items-center gap-2">
+            <Button aria-label="Refresh market data" variant="ghost" size="sm" :disabled="loading" class="h-6 w-6 p-0" @click="refreshData">
+              <RefreshCw :class="{ 'animate-spin': loading }" class="w-3 h-3" />
+            </Button>
+            <div class="text-xs text-muted-foreground">{{ lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : '—' }}</div>
+          </div>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-lg font-bold font-mono">{{ currentPrice }}</span>
+          <span class="text-lg font-bold font-mono">{{ formattedPrice }}</span>
           <Badge :variant="priceChange >= 0 ? 'default' : 'destructive'" class="text-xs font-mono">
             {{ priceChange >= 0 ? '+' : '' }}{{ priceChangePercent }}%
           </Badge>
@@ -68,7 +72,8 @@
       </div>
 
       <!-- Quick Technical Indicators -->
-      <div class="border-t pt-3 space-y-2">
+      <Separator class="my-2" />
+      <div class="pt-1 space-y-2">
         <div class="text-sm font-medium">Technical Overview</div>
         <div class="grid grid-cols-3 gap-2 text-xs">
           <div class="text-center p-2 rounded bg-muted/30">
@@ -95,7 +100,8 @@
       </div>
 
       <!-- Recent Signals -->
-      <div class="border-t pt-3">
+      <Separator class="my-2" />
+      <div class="pt-1">
         <div class="text-sm font-medium mb-2">Recent Signals</div>
         <div v-if="recentSignals.length === 0" class="text-xs text-muted-foreground text-center py-2">
           No recent signals
@@ -107,7 +113,9 @@
               <ArrowDown v-else class="w-3 h-3" />
               <span class="font-medium">{{ signal.type.toUpperCase() }}</span>
             </div>
-            <span class="font-mono">{{ signal.confidence }}%</span>
+            <Badge class="font-mono" :variant="signal.confidence >= 70 ? 'default' : signal.confidence >= 50 ? 'secondary' : 'destructive'">
+              {{ signal.confidence }}%
+            </Badge>
           </div>
         </div>
       </div>
@@ -141,12 +149,16 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core' // Debounced async fetching
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectItemText, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TrendingUp, RefreshCw, ArrowUp, ArrowDown } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import type { PriceMessage, OandaCandlesResponse } from '@/types/Oanda'
 import { useOandaStore } from '@/stores/oanda' // Centralized OANDA Pinia store
 import { useTradingSignals } from '@/composables/useTradingSignals' // Trading signals composable
+import { useTechnicalIndicators } from '@/composables/useTechnicalIndicators'
+import { useCandlesStore } from '@/stores/candles'
 
 // --- Currency selection state ---
 const selectedCurrency = ref('EUR_USD')
@@ -173,7 +185,11 @@ const minorPairs = [
 
 // --- Reactive data refs for market/pricing data ---
 const pricingData = ref<{ prices: PriceMessage[] } | null>(null)
+// Use the centralized candles store as the canonical source of candle data
+const candlesStore = useCandlesStore()
 const candleData = ref<OandaCandlesResponse | null>(null)
+const lastUpdated = ref<Date | null>(null)
+const fetchError = ref<string | null>(null)
 
 // --- Trading signals composable ---
 // Provides activeSignals (array of current signals)
@@ -186,15 +202,28 @@ const { getCandlesData, getPricingData } = useOandaStore()
 // --- Fetch data for the selected currency ---
 // Uses Pinia store methods for pricing and candles
 const fetchCurrencyData = async (currency: string) => {
+  fetchError.value = null
   try {
-    const [pricingResponse, candleResponse] = await Promise.all([
-      getPricingData(currency),
-      getCandlesData(currency, 'M5', 50)
-    ])
+    // pricing remains fetched from the OANDA store
+    const pricingResponse = await getPricingData(currency)
+    // configure candles store and refresh
+    candlesStore.setInstrument(currency)
+    candlesStore.setGranularity('M5')
+    await candlesStore.refresh()
     pricingData.value = pricingResponse
-    candleData.value = candleResponse
-  } catch (error) {
+    // mirror the store shape for any legacy code reading candleData
+    candleData.value = { candles: candlesStore.candles || [] } as OandaCandlesResponse
+    lastUpdated.value = new Date()
+    // notify success on manual refresh
+    if (!loading.value) {
+      // only toast when this wasn't a background immediate fetch
+      toast.success(`Loaded ${selectedCurrencyLabel.value}`)
+    }
+  } catch (error: any) {
+    // surface a short message for UI consumption
     console.error('Error fetching currency data:', error)
+    fetchError.value = error?.message || String(error)
+    toast.error(`Error loading ${selectedCurrencyLabel.value}: ${fetchError.value}`)
   }
 }
 
@@ -211,16 +240,24 @@ const selectedCurrencyLabel = computed(() => {
   return pair?.label || selectedCurrency.value
 })
 
+// Formatted price for display
+const formattedPrice = computed(() => {
+  const raw = currentPrice.value
+  const n = Number(raw)
+  if (!isFinite(n)) return '—'
+  return new Intl.NumberFormat(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 6 }).format(n)
+})
+
 // --- Loading state for refresh button ---
 const loading = ref(false)
 
 // --- Simplified market sentiment calculation (last 10 candles) ---
 const sentiment = computed(() => {
-  if (!candleData.value?.candles || candleData.value.candles.length < 10) {
+  if (!candlesStore.candles || (candlesStore.candles as any[]).length < 10) {
     return { type: 'neutral', label: 'Neutral', value: 50 }
   }
 
-  const candles = candleData.value.candles.slice(-10)
+  const candles = (candlesStore.candles as any[]).slice(-10)
   let bullishCount = 0
 
   candles.forEach((candle, index) => {
@@ -248,9 +285,9 @@ const currentPrice = computed(() => {
 })
 
 const priceChange = computed(() => {
-  if (!candleData.value?.candles || candleData.value.candles.length < 2) return 0
+  if (!candlesStore.candles || (candlesStore.candles as any[]).length < 2) return 0
 
-  const candles = candleData.value.candles
+  const candles = candlesStore.candles as any[]
   const current = candles[candles.length - 1]
   const previous = candles[candles.length - 2]
 
@@ -261,9 +298,9 @@ const priceChange = computed(() => {
 })
 
 const priceChangePercent = computed(() => {
-  if (!candleData.value?.candles || candleData.value.candles.length < 2) return '0.00'
+  if (!candlesStore.candles || (candlesStore.candles as any[]).length < 2) return '0.00'
 
-  const candles = candleData.value.candles
+  const candles = candlesStore.candles as any[]
   const current = candles[candles.length - 1]
   const previous = candles[candles.length - 2]
 
@@ -276,73 +313,8 @@ const priceChangePercent = computed(() => {
   return '0.00'
 })
 
-// --- Simplified technical indicators (RSI, MACD, Trend) ---
-// All calculated from last N candles for performance
-const rsi = computed(() => {
-  if (!candleData.value?.candles || candleData.value.candles.length < 14) return 50
-
-  const prices = candleData.value.candles
-    .filter(c => c.complete && c.mid?.c)
-    .map(c => parseFloat(c.mid!.c))
-    .slice(-14)
-
-  if (prices.length < 14) return 50
-
-  // Simplified RSI calculation - reduced iterations
-  let gains = 0
-  let losses = 0
-  const changeCount = Math.min(13, prices.length - 1)
-
-  for (let i = 1; i <= changeCount; i++) {
-    const change = prices[i] - prices[i - 1]
-    if (change > 0) gains += change
-    else losses += Math.abs(change)
-  }
-
-  const avgGain = gains / changeCount
-  const avgLoss = losses / changeCount
-
-  if (avgLoss === 0) return 100
-  const rs = avgGain / avgLoss
-  return 100 - (100 / (1 + rs))
-})
-
-const macdSignal = computed(() => {
-  if (!candleData.value?.candles || candleData.value.candles.length < 26) return 'neutral'
-
-  const candles = candleData.value.candles.filter(c => c.complete && c.mid?.c)
-  if (candles.length < 26) return 'neutral'
-
-  // Optimized MACD calculation - use last 26 prices only
-  const prices = candles.slice(-26).map(c => parseFloat(c.mid!.c))
-
-  // Simple moving averages for MACD approximation (more efficient)
-  const sum12 = prices.slice(-12).reduce((a, b) => a + b, 0)
-  const sum26 = prices.reduce((a, b) => a + b, 0)
-  const ema12 = sum12 / 12
-  const ema26 = sum26 / 26
-  const macd = ema12 - ema26
-
-  return macd > 0 ? 'bullish' : 'bearish'
-})
-
-const trend = computed(() => {
-  if (!candleData.value?.candles || candleData.value.candles.length < 20) return 'neutral'
-
-  const prices = candleData.value.candles
-    .filter(c => c.complete && c.mid?.c)
-    .map(c => parseFloat(c.mid!.c))
-    .slice(-20)
-
-  if (prices.length < 20) return 'neutral'
-
-  const firstHalf = prices.slice(0, 10).reduce((a, b) => a + b) / 10
-  const secondHalf = prices.slice(-10).reduce((a, b) => a + b) / 10
-
-  if (secondHalf > firstHalf * 1.001) return 'up'
-  if (secondHalf < firstHalf * 0.999) return 'down'
-  return 'neutral'
-})
+// Use extracted composable for indicators
+const { rsi, macdSignal, trend } = useTechnicalIndicators(computed(() => (candlesStore.candles ?? null) as any))
 
 // --- Active signals count (from useTradingSignals) ---
 const activeSignalsCount = computed(() => {

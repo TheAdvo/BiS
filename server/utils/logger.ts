@@ -24,7 +24,21 @@ export const log = (
   context?: Record<string, any>,
   debugEnabled?: boolean
 ) => {
-  if (!LOGGING_ENABLED) return;
+  const importantKeywords = [
+    "heartbeat",
+    "data",
+    "account",
+    "pricing",
+    "orders",
+    "trades",
+    "positions",
+    "candles",
+    "accounts",
+  ];
+  const isImportant = importantKeywords.some((k) =>
+    message.toLowerCase().includes(k)
+  );
+  if (!LOGGING_ENABLED && !isImportant) return;
   const timestamp = new Date().toISOString();
   if (level === "debug" && !debugEnabled) return;
   logger[level]({ timestamp, message, ...context });
@@ -45,8 +59,19 @@ export const debug = (
 export const createServerLogger = (apiName: string) => {
   const isDev = process.env.NODE_ENV === "development";
 
+  // If global logging is disabled, return a no-op logger so all server-side
+  // logging is consistently controlled by LOGGING_ENABLED (KISS).
+  if (!LOGGING_ENABLED) {
+    return {
+      info: (_message: string, _data?: any) => {},
+      warn: (_message: string, _data?: any) => {},
+      error: (_message: string, _data?: any) => {},
+    };
+  }
+
   const extractOandaAction = (msg: string) => {
     const actions = [
+      "heartbeat",
       "positions",
       "trades",
       "candles",

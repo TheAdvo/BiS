@@ -12,7 +12,8 @@
 useHead({
   htmlAttrs: {
     lang: 'en',
-    class: 'dark'
+    class: 'light'
   }
 })
+import '@/assets/css/tailwind.css'
 </script>

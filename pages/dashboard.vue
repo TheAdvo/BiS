@@ -1,84 +1,49 @@
 <script setup lang="ts">
-// Use the dashboard layout
-import { onMounted } from 'vue'
-
-// Import trading bot components directly
+// Components
 import StrategyScriptEditor from '@/components/TradingBot/StrategyScriptEditor.vue'
 import MarketOverview from '~/components/TradingBot/MarketOverview.vue'
 import BotQuickStats from '@/components/TradingBot/BotQuickStats.vue'
-import { useAccountStore } from '@/stores/account'
-import { storeToRefs } from 'pinia'
+import AccountCard from '@/components/Dashboard/AccountCard.vue'
+import MaCrossoverPanel from '@/components/TradingBot/MaCrossoverPanel.vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
+definePageMeta({ layout: 'dashboard' })
 
-
-// Format balance with thousands separators and two decimals
-function formatBalance(balance: number | string) {
-  const num = typeof balance === 'number' ? balance : parseFloat(balance)
-  if (isNaN(num)) return balance
-  return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-
-// Use Pinia Account store
-const accountStore = useAccountStore()
-const { id, balance, currency, positions, loading, error } = storeToRefs(accountStore)
-const fetchAccount = accountStore.fetchAccount
+// --- Account store ---
 
 // SEO Meta Tags
 useHead({
   title: 'Trading Bot Engine - Automated Strategy Execution',
   meta: [
     { name: 'description', content: 'Advanced trading bot engine with custom JavaScript strategy scripting, real-time execution, and performance monitoring.' },
-    { name: 'robots', content: 'noindex, nofollow' } // Private dashboard
+    { name: 'robots', content: 'noindex, nofollow' }
   ]
 })
 
-onMounted(async () => {
-  const logger = useLogger();
-  await fetchAccount()
-})
+
 </script>
 
 <template>
-
   <div class="flex-1 p-6 bg-background">
     <!-- OANDA Account Info -->
-    <div class="mb-4 p-4 rounded bg-card shadow flex flex-col gap-2">
-      <template v-if="loading">
-        <span class="text-muted">Loading account...</span>
-      </template>
-      <template v-else-if="error">
-        <span class="text-error">Error: {{ error }}</span>
-      </template>
-      <template v-else-if="id">
-        <div class="flex gap-4 items-center">
-          <span class="font-bold">Account:</span>
-          <span>{{ id }}</span>
-          <span class="font-bold">Balance:</span>
-          <span>{{ formatBalance(balance) }} {{ currency }}</span>
-        </div>
-      </template>
-    </div <!-- Bot Quick Stats -->
+    <AccountCard />
     <BotQuickStats />
 
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full">
       <!-- Left side - Strategy Editor & Management (5 columns) -->
-      <div class="xl:col-span-5 space-y-2">
+      <div class="xl:col-span-5 space-y-6">
         <ClientOnly>
           <StrategyScriptEditor />
         </ClientOnly>
       </div>
 
       <!-- Center - Market Analysis & Performance (4 columns) -->
-      <div class="xl:col-span-4 space-y-2">
+      <div class="xl:col-span-4 space-y-6">
+        <MarketOverview />
       </div>
 
       <!-- Right side - Active Bots & Control (3 columns) -->
-      <div class="xl:col-span-3 space-y-2">
-        <MarketOverview />
+      <div class="xl:col-span-3 space-y-6">
+        <MaCrossoverPanel />
       </div>
     </div>
   </div>

@@ -1,77 +1,32 @@
 // composables/useOandaCandles.ts
 import { ref, watch, computed, type Ref, onScopeDispose } from "vue";
 import type { OandaCandlesResponse, OandaCandle } from "@/types/Oanda";
-
-// Advanced technical analysis interface
-interface TechnicalIndicators {
-  rsi: number | null;
-  macd: { macd: number; signal: number; histogram: number } | null;
-  bollinger: {
-    upper: number;
-    middle: number;
-    lower: number;
-    percentB: number;
-  } | null;
-  stochastic: { k: number; d: number } | null;
-  atr: number | null;
-  adx: { adx: number; plusDI: number; minusDI: number } | null;
-  ichimoku: {
-    tenkanSen: number;
-    kijunSen: number;
-    senkouSpanA: number;
-    senkouSpanB: number;
-    chikouSpan: number;
-  } | null;
-  williams: number | null;
-  cci: number | null;
-  momentum: number | null;
-  roc: number | null;
-}
-
-// Candlestick pattern recognition
-interface CandlestickPattern {
-  name: string;
-  type: "bullish" | "bearish" | "neutral";
-  strength: "weak" | "moderate" | "strong";
-  confidence: number;
-  description: string;
-}
-
-// Market structure analysis
-interface MarketStructure {
-  trend: "uptrend" | "downtrend" | "sideways";
-  strength: number;
-  support: number[];
-  resistance: number[];
-  pivotPoints: {
-    pivot: number;
-    r1: number;
-    r2: number;
-    r3: number;
-    s1: number;
-    s2: number;
-    s3: number;
-  };
-}
-
-export interface UseOandaCandlesReturn {
-  data: any;
-  candles: any;
-  pending: any;
-  error: any;
-  refresh: () => Promise<void>;
-  // extraction helpers
-  getOHLCData: () => any;
-  getClosePrices: () => number[];
-  // indicators (partial)
-  calculateSMA: (period: number) => number | null;
-}
+import type {
+  UseOandaCandlesReturn,
+  TechnicalIndicators,
+  CandlestickPattern,
+  MarketStructure,
+  OHLC,
+} from "@/types/candles";
+// Pure helper for testing: accept either full response or array of candles
+export const extractClosePrices = (
+  input: OandaCandlesResponse | OandaCandle[] | null | undefined
+): number[] => {
+  const list: OandaCandle[] = Array.isArray(input)
+    ? input
+    : input && Array.isArray((input as any).candles)
+    ? (input as any).candles
+    : [];
+  return list.filter((c) => c?.mid?.c).map((c) => parseFloat(c.mid!.c));
+};
+// In-flight request dedupe map: key -> Promise
+const inFlightRequests = new Map<string, Promise<OandaCandlesResponse>>();
 export const useOandaCandles = (
   instrument: Ref<string>,
   granularity: Ref<string>,
   count: number = 500,
   livePrice?: any
-) => {
+): UseOandaCandlesReturn => {
   const {
     data,
     pending,
@@ -123,13 +78,135 @@ export const useOandaCandles = (
         }
       );
 
+      // Basic validation & normalization to avoid shape surprises
+      if (!response || !Array.isArray(response.candles)) {
+        throw new Error("Invalid candles response");
+      }
+      // ensure each candle has expected mid/ask/bid fields (normalize if necessary)
+      const normalized = response.candles.map((c) => {
+        // If mid is missing but bid/ask present, create mid from bid/ask
+        if (!c.mid && (c.bid || c.ask)) {
+          const bid = c.bid && c.bid.c ? parseFloat(c.bid.c) : undefined;
+          const ask = c.ask && c.ask.c ? parseFloat(c.ask.c) : undefined;
+          const midVal =
+            typeof bid === "number" && typeof ask === "number"
+              ? ((bid + ask) / 2).toString()
+              : undefined;
+          return {
+            ...c,
+            mid:
+              c.mid ||
+              (midVal
+                ? { o: midVal, h: midVal, l: midVal, c: midVal }
+                : undefined),
+          };
+        }
+        return c;
+      });
+
       // assign into the async-data ref so consumers keep using the same ref
-      data.value = response;
+      data.value = { ...response, candles: normalized };
     } catch (err: any) {
       if (err?.name === "AbortError") return;
       error.value = err;
     } finally {
       pending.value = false;
+    }
+    const key = `${instrument.value}:${granularity.value}:${count}`;
+
+    // If an identical request is already in flight, reuse its promise
+    if (inFlightRequests.has(key)) {
+      try {
+        const response = await inFlightRequests.get(key)!;
+        data.value = response as any;
+        return;
+      } catch (err: any) {
+        // propagate error to this caller as well
+        error.value = err;
+        return;
+      } finally {
+        pending.value = false;
+      }
+    }
+
+    // Create a new fetch promise with retry/backoff
+    const maxRetries = 3;
+    const baseDelay = 500; // ms
+
+    const fetchWithRetry = (async (): Promise<OandaCandlesResponse> => {
+      let attempt = 0;
+      while (true) {
+        try {
+          const resp = await $fetch<OandaCandlesResponse>(
+            "/api/oanda/candles",
+            {
+              query: {
+                instrument: instrument.value,
+                granularity: granularity.value,
+                count,
+              },
+              signal: controller.signal,
+            }
+          );
+
+          if (!resp || !Array.isArray(resp.candles)) {
+            throw new Error("Invalid candles response");
+          }
+
+          // normalize mid if missing
+          const normalized = resp.candles.map((c) => {
+            if (!c.mid && (c.bid || c.ask)) {
+              const bid =
+                c.bid && (c.bid as any).c
+                  ? parseFloat((c.bid as any).c)
+                  : undefined;
+              const ask =
+                c.ask && (c.ask as any).c
+                  ? parseFloat((c.ask as any).c)
+                  : undefined;
+              const midVal =
+                typeof bid === "number" && typeof ask === "number"
+                  ? ((bid + ask) / 2).toString()
+                  : undefined;
+              return {
+                ...c,
+                mid:
+                  c.mid ||
+                  (midVal
+                    ? { o: midVal, h: midVal, l: midVal, c: midVal }
+                    : undefined),
+              };
+            }
+            return c;
+          });
+
+          return { ...resp, candles: normalized };
+        } catch (err: any) {
+          if (err?.name === "AbortError") throw err;
+
+          attempt++;
+          if (attempt > maxRetries) throw err;
+
+          const jitter = Math.floor(Math.random() * 200) - 100; // ±100ms
+          const delay = baseDelay * Math.pow(2, attempt - 1) + jitter;
+          // small backoff wait
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+      }
+    })();
+
+    inFlightRequests.set(key, fetchWithRetry);
+
+    try {
+      const response = await fetchWithRetry;
+      data.value = response as any;
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      error.value = err;
+    } finally {
+      pending.value = false;
+      inFlightRequests.delete(key);
     }
   };
 
@@ -149,7 +226,7 @@ export const useOandaCandles = (
   });
 
   // If livePrice is provided, append a synthetic candle for calculations
-  const candles = computed(() => {
+  const candles = computed<OandaCandle[]>(() => {
     const base = data.value?.candles ? [...data.value.candles] : [];
     if (
       livePrice &&
