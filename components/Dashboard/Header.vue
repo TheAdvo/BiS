@@ -4,11 +4,11 @@
       <!-- Left side - Sidebar trigger and Bot Engine title -->
       <div class="flex items-center gap-4">
         <SidebarTrigger />
-        <h1 class="text-xl font-semibold">Trading Bot Engine</h1>
+        <h1 class="text-xl font-semibold">ADVO Engine</h1>
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 rounded-full" :class="accountTypeIndicatorColor" />
           <span class="text-sm text-muted-foreground">{{ accountTypeIndicator }}</span>
-          <span class="text-sm text-muted-foreground">TESTING</span>
+          <span class="text-sm text-orange-300">TESTING</span>
         </div>
       </div>
 

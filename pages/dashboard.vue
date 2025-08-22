@@ -12,7 +12,7 @@ definePageMeta({ layout: 'dashboard' })
 
 // SEO Meta Tags
 useHead({
-  title: 'Trading Bot Engine - Automated Strategy Execution',
+  title: 'ADVO Engine - Automated Strategy Execution',
   meta: [
     { name: 'description', content: 'Advanced trading bot engine with custom JavaScript strategy scripting, real-time execution, and performance monitoring.' },
     { name: 'robots', content: 'noindex, nofollow' }

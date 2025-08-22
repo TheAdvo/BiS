@@ -35,9 +35,9 @@ const items = [
       <SidebarHeader>
         <div class="flex items-center gap-2 py-2">
           <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <span class="text-primary-foreground font-bold text-sm">TB</span>
+            <span class="text-primary-foreground font-bold text-sm">AE</span>
           </div>
-          <span class="text-lg font-bold truncate group-data-[collapsible=icon]:hidden">Trading Bot Engine</span>
+          <span class="text-lg font-bold truncate group-data-[collapsible=icon]:hidden">ADVO Engine</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -68,7 +68,7 @@ const items = [
         <template #fallback>
           <div class="flex items-center justify-center py-12">
             <div class="text-center">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"/>
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2" />
               <p class="text-muted-foreground">Loading...</p>
             </div>
           </div>
