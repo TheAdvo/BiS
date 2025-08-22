@@ -51,9 +51,9 @@
     "@iconify-json/lucide": "^1.2.57",
     "@iconify-json/ri": "^1.2.5",
     "@vue/test-utils": "^2.0.0-rc.18",
-    "jsdom": "^22.1.0",
-    "pino-pretty": "^13.1.1",
-    "typescript": "^5.8.3",
-    "vitest": "^1.0.0"
+  "jsdom": "^22.1.0",
+  "pino-pretty": "^13.1.1",
+  "typescript": "^5.8.3",
+  "vitest": "^3.2.4"
   }
 }
